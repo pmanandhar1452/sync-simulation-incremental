@@ -254,6 +254,13 @@ export class ServerConcept {
 
     // Helper method to create standard API routes
     createAPIRoutes({ server, database }: { server: string; database: any }) {
+        // Check if database is available
+        const isDatabaseAvailable = database && typeof database.execute === 'function';
+        
+        if (!isDatabaseAvailable) {
+            console.log("⚠️  Creating API routes in database-less mode");
+        }
+
         // Health check route
         this.addRoute({
             id: 'health_check',
@@ -261,7 +268,11 @@ export class ServerConcept {
             method: 'GET',
             path: '/api/health',
             handler: async (req: Request, res: Response) => {
-                res.json({ status: 'ok', timestamp: Date.now() });
+                res.json({ 
+                    status: 'ok', 
+                    timestamp: Date.now(),
+                    database: isDatabaseAvailable ? 'connected' : 'disconnected'
+                });
             },
             middleware: []
         });
@@ -273,6 +284,13 @@ export class ServerConcept {
             method: 'POST',
             path: '/api/auth/register',
             handler: async (req: Request, res: Response) => {
+                if (!isDatabaseAvailable) {
+                    return res.status(503).json({ 
+                        error: 'User registration unavailable - database not connected',
+                        mode: 'guest-only'
+                    });
+                }
+
                 try {
                     const { username, email, password } = req.body;
                     
@@ -318,6 +336,13 @@ export class ServerConcept {
             method: 'POST',
             path: '/api/auth/login',
             handler: async (req: Request, res: Response) => {
+                if (!isDatabaseAvailable) {
+                    return res.status(503).json({ 
+                        error: 'User login unavailable - database not connected',
+                        mode: 'guest-only'
+                    });
+                }
+
                 try {
                     const { username, password } = req.body;
                     
@@ -370,14 +395,24 @@ export class ServerConcept {
                 try {
                     const userId = `guest_${Date.now()}`;
                     
-                    await database.execute({
-                        id: `create_guest_${Date.now()}`,
-                        connection: 'main',
-                        sql: 'INSERT INTO users (id, username, email, password_hash, created_at, is_guest) VALUES (?, ?, ?, ?, ?, ?)',
-                        parameters: [userId, `guest_${Date.now()}`, '', '', Date.now(), true]
-                    });
+                    if (isDatabaseAvailable) {
+                        // Try to create guest user in database
+                        try {
+                            await database.execute({
+                                id: `create_guest_${Date.now()}`,
+                                connection: 'main',
+                                sql: 'INSERT INTO users (id, username, email, password_hash, created_at, is_guest) VALUES (?, ?, ?, ?, ?, ?)',
+                                parameters: [userId, `guest_${Date.now()}`, '', '', Date.now(), true]
+                            });
+                        } catch (dbError) {
+                            console.log("⚠️  Could not create guest user in database, using session-only mode");
+                        }
+                    }
 
-                    res.json({ id: userId });
+                    res.json({ 
+                        id: userId,
+                        mode: isDatabaseAvailable ? 'persistent' : 'session-only'
+                    });
                 } catch (error) {
                     res.status(500).json({ error: error.message });
                 }
@@ -393,20 +428,71 @@ export class ServerConcept {
             path: '/api/simulation-types',
             handler: async (req: Request, res: Response) => {
                 try {
-                    const result = await database.execute({
-                        id: `get_types_${Date.now()}`,
-                        connection: 'main',
-                        sql: 'SELECT * FROM simulation_types WHERE is_active = TRUE',
-                        parameters: []
-                    });
+                    if (isDatabaseAvailable) {
+                        // Try to get from database
+                        const result = await database.execute({
+                            id: `get_types_${Date.now()}`,
+                            connection: 'main',
+                            sql: 'SELECT * FROM simulation_types WHERE is_active = TRUE',
+                            parameters: []
+                        });
 
-                    if (result.error) {
-                        return res.status(500).json({ error: result.error });
+                        if (result.error) {
+                            throw new Error(result.error);
+                        }
+
+                        res.json(result.result.rows);
+                    } else {
+                        // Fallback simulation types
+                        const fallbackTypes = [
+                            {
+                                id: "solar-system",
+                                name: "Solar System",
+                                description: "Interactive solar system simulation with realistic orbital mechanics and inclined orbits",
+                                category: "astronomy",
+                                icon: "🌞",
+                                thumbnail: "/thumbnails/solar-system.jpg",
+                                is_active: true,
+                                default_config: {
+                                    speed: 1.0,
+                                    showOrbits: true,
+                                    showLabels: true
+                                },
+                                requirements: {
+                                    threejs: true,
+                                    webgl: true
+                                },
+                                version: "1.0"
+                            }
+                        ];
+                        
+                        res.json(fallbackTypes);
                     }
-
-                    res.json(result.result.rows);
                 } catch (error) {
-                    res.status(500).json({ error: error.message });
+                    // If database fails, return fallback
+                    const fallbackTypes = [
+                        {
+                            id: "solar-system",
+                            name: "Solar System",
+                            description: "Interactive solar system simulation with realistic orbital mechanics and inclined orbits",
+                            category: "astronomy",
+                            icon: "🌞",
+                            thumbnail: "/thumbnails/solar-system.jpg",
+                            is_active: true,
+                            default_config: {
+                                speed: 1.0,
+                                showOrbits: true,
+                                showLabels: true
+                            },
+                            requirements: {
+                                threejs: true,
+                                webgl: true
+                            },
+                            version: "1.0"
+                        }
+                    ];
+                    
+                    res.json(fallbackTypes);
                 }
             },
             middleware: []
@@ -419,6 +505,13 @@ export class ServerConcept {
             method: 'POST',
             path: '/api/projects',
             handler: async (req: Request, res: Response) => {
+                if (!isDatabaseAvailable) {
+                    return res.status(503).json({ 
+                        error: 'Project creation unavailable - database not connected',
+                        mode: 'guest-only'
+                    });
+                }
+
                 try {
                     const { name, description, type, config } = req.body;
                     const userId = req.headers['user-id'] as string;

@@ -82,31 +82,35 @@ async function initializeBackend() {
             ...dbConfig
         });
 
+        let databaseConnected = false;
         if (dbResult.error) {
             console.error("❌ Database connection failed:", dbResult.error);
+            console.log("⚠️  Continuing without database - guest access only");
             console.log("💡 Please ensure MySQL is running and the database exists");
             console.log("💡 Check your .env file configuration");
             console.log("💡 You can create the database with: CREATE DATABASE simulations;");
-            return;
+        } else {
+            console.log("✅ Database connected successfully");
+            databaseConnected = true;
+
+            // Initialize database schema
+            console.log("🏗️ Initializing database schema...");
+            try {
+                await Database.initializeSchema({ connection: "main" });
+                console.log("✅ Database schema initialized");
+            } catch (schemaError) {
+                console.error("❌ Schema initialization failed:", schemaError);
+                console.log("⚠️  Continuing without database schema - guest access only");
+                databaseConnected = false;
+            }
+
+            // Set database reference for User concept
+            if (databaseConnected) {
+                console.log("🔗 Setting up User concept database reference...");
+                User.setDatabase(concepts.Database);
+                console.log("✅ User concept database reference set");
+            }
         }
-
-        console.log("✅ Database connected successfully");
-
-        // Initialize database schema
-        console.log("🏗️ Initializing database schema...");
-        try {
-            await Database.initializeSchema({ connection: "main" });
-            console.log("✅ Database schema initialized");
-        } catch (schemaError) {
-            console.error("❌ Schema initialization failed:", schemaError);
-            console.log("💡 This might be due to database permissions or connection issues");
-            return;
-        }
-
-        // Set database reference for User concept
-        console.log("🔗 Setting up User concept database reference...");
-        User.setDatabase(Database);
-        console.log("✅ User concept database reference set");
 
         // Get server configuration from environment variables
         const serverConfig = {
@@ -136,59 +140,63 @@ async function initializeBackend() {
         console.log("🔗 Creating API routes...");
         Server.createAPIRoutes({ server: "main", database: Database });
 
-        // Register simulation types
-        console.log("🎮 Registering simulation types...");
-        try {
-            const simTypeResult = await Database.execute({
-                id: "register_solar_system",
-                connection: "main",
-                sql: `INSERT INTO simulation_types (id, name, description, category, icon, thumbnail, is_active, default_config, requirements, version) 
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                      ON DUPLICATE KEY UPDATE 
-                      name = VALUES(name), 
-                      description = VALUES(description),
-                      is_active = VALUES(is_active)`,
-                parameters: [
-                    "solar-system",
-                    "Solar System",
-                    "Interactive solar system simulation with realistic orbital mechanics and inclined orbits",
-                    "astronomy",
-                    "🌞",
-                    "/thumbnails/solar-system.jpg",
-                    true,
-                    JSON.stringify({
-                        speed: 1.0,
-                        showOrbits: true,
-                        showLabels: true
-                    }),
-                    JSON.stringify({
-                        threejs: true,
-                        webgl: true
-                    }),
-                    "1.0"
-                ]
-            });
+        // Register simulation types (only if database is connected)
+        if (databaseConnected) {
+            console.log("🎮 Registering simulation types...");
+            try {
+                const simTypeResult = await Database.execute({
+                    id: "register_solar_system",
+                    connection: "main",
+                    sql: `INSERT INTO simulation_types (id, name, description, category, icon, thumbnail, is_active, default_config, requirements, version) 
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                          ON DUPLICATE KEY UPDATE 
+                          name = VALUES(name), 
+                          description = VALUES(description),
+                          is_active = VALUES(is_active)`,
+                    parameters: [
+                        "solar-system",
+                        "Solar System",
+                        "Interactive solar system simulation with realistic orbital mechanics and inclined orbits",
+                        "astronomy",
+                        "🌞",
+                        "/thumbnails/solar-system.jpg",
+                        true,
+                        JSON.stringify({
+                            speed: 1.0,
+                            showOrbits: true,
+                            showLabels: true
+                        }),
+                        JSON.stringify({
+                            threejs: true,
+                            webgl: true
+                        }),
+                        "1.0"
+                    ]
+                });
 
-            if (simTypeResult.error) {
-                console.error("❌ Simulation type registration failed:", simTypeResult.error);
-            } else {
-                console.log("✅ Simulation types registered");
+                if (simTypeResult.error) {
+                    console.error("❌ Simulation type registration failed:", simTypeResult.error);
+                } else {
+                    console.log("✅ Simulation types registered");
+                }
+            } catch (simTypeError) {
+                console.error("❌ Simulation type registration failed:", simTypeError);
             }
-        } catch (simTypeError) {
-            console.error("❌ Simulation type registration failed:", simTypeError);
-        }
 
-        // Create a default guest user
-        console.log("👤 Creating default guest user...");
-        try {
-            const guestResult = await User.createGuest({ id: "guest_default" });
-            if (guestResult.error) {
-                console.error("❌ Guest user creation failed:", guestResult.error);
-            } else {
-                console.log("✅ Default guest user created");
+            // Create a default guest user (only if database is connected)
+            console.log("👤 Creating default guest user...");
+            try {
+                const guestResult = await User.createGuest({ id: "guest_default" });
+                if (guestResult.error) {
+                    console.error("❌ Guest user creation failed:", guestResult.error);
+                } else {
+                    console.log("✅ Default guest user created");
+                }
+            } catch (guestError) {
+                console.error("❌ Guest user creation failed:", guestError);
             }
-        } catch (guestError) {
-            console.error("❌ Guest user creation failed:", guestError);
+        } else {
+            console.log("⚠️  Skipping database operations - guest access only mode");
         }
 
         console.log("🎉 Backend initialization complete!");

@@ -2,10 +2,12 @@
 
 class PlatformApp {
     constructor() {
+        console.log('PlatformApp constructor called');
         this.currentUser = null;
         this.simulationTypes = [];
         this.userProjects = [];
         this.apiBaseUrl = 'http://localhost:3000/api';
+        console.log('PlatformApp initialized with API URL:', this.apiBaseUrl);
         this.init();
     }
 
@@ -14,24 +16,44 @@ class PlatformApp {
         this.setupEventListeners();
         this.loadSimulationTypes();
         this.checkAuthStatus();
+        console.log('Platform App initialization complete');
     }
 
     setupEventListeners() {
+        console.log('Setting up event listeners...');
+        
         // Authentication form submissions
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleLogin();
-        });
-
-        document.getElementById('registerForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleRegister();
-        });
-
-        document.getElementById('guestForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleGuestLogin();
-        });
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const guestForm = document.getElementById('guestForm');
+        
+        console.log('Forms found:', { loginForm: !!loginForm, registerForm: !!registerForm, guestForm: !!guestForm });
+        
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => {
+                console.log('Login form submitted');
+                e.preventDefault();
+                this.handleLogin();
+            });
+        }
+        
+        if (registerForm) {
+            registerForm.addEventListener('submit', (e) => {
+                console.log('Register form submitted');
+                e.preventDefault();
+                this.handleRegister();
+            });
+        }
+        
+        if (guestForm) {
+            guestForm.addEventListener('submit', (e) => {
+                console.log('Guest form submitted');
+                e.preventDefault();
+                this.handleGuestLogin();
+            });
+        }
+        
+        console.log('Event listeners set up complete');
     }
 
     async handleLogin() {
@@ -41,7 +63,11 @@ class PlatformApp {
         try {
             const response = await this.apiRequest('POST', '/auth/login', { username, password });
             if (response.error) {
-                this.showError(response.error);
+                if (response.mode === 'guest-only') {
+                    this.showError('User login unavailable. Please use guest access or check database connection.');
+                } else {
+                    this.showError(response.error);
+                }
             } else {
                 this.currentUser = { id: response.id, username, isGuest: false, token: response.token };
                 this.showSuccess('Login successful!');
@@ -60,7 +86,11 @@ class PlatformApp {
         try {
             const response = await this.apiRequest('POST', '/auth/register', { username, email, password });
             if (response.error) {
-                this.showError(response.error);
+                if (response.mode === 'guest-only') {
+                    this.showError('User registration unavailable. Please use guest access or check database connection.');
+                } else {
+                    this.showError(response.error);
+                }
             } else {
                 this.currentUser = { id: response.id, username, isGuest: false };
                 this.showSuccess('Registration successful!');
@@ -72,16 +102,33 @@ class PlatformApp {
     }
 
     async handleGuestLogin() {
+        console.log('handleGuestLogin called');
         try {
             const response = await this.apiRequest('POST', '/auth/guest', {});
+            console.log('Guest login response:', response);
+            
             if (response.error) {
                 this.showError(response.error);
             } else {
-                this.currentUser = { id: response.id, username: 'Guest User', isGuest: true };
-                this.showSuccess('Welcome, Guest!');
+                this.currentUser = { 
+                    id: response.id, 
+                    username: 'Guest User', 
+                    isGuest: true,
+                    mode: response.mode || 'session-only'
+                };
+                
+                console.log('Guest user created:', this.currentUser);
+                
+                if (response.mode === 'session-only') {
+                    this.showSuccess('Welcome, Guest! (Session-only mode - data will not be saved)');
+                } else {
+                    this.showSuccess('Welcome, Guest!');
+                }
+                
                 this.onAuthSuccess();
             }
         } catch (error) {
+            console.error('Guest login error:', error);
             this.showError('Guest login failed. Please try again.');
         }
     }
@@ -93,7 +140,28 @@ class PlatformApp {
             this.renderSimulationTypes();
         } catch (error) {
             console.error('Failed to load simulation types:', error);
-            this.showError('Failed to load simulation types. Please check if the backend is running.');
+            // Show fallback simulation type
+            this.simulationTypes = [{
+                id: "solar-system",
+                name: "Solar System",
+                description: "Interactive solar system simulation with realistic orbital mechanics and inclined orbits",
+                category: "astronomy",
+                icon: "🌞",
+                thumbnail: "/thumbnails/solar-system.jpg",
+                is_active: true,
+                default_config: {
+                    speed: 1.0,
+                    showOrbits: true,
+                    showLabels: true
+                },
+                requirements: {
+                    threejs: true,
+                    webgl: true
+                },
+                version: "1.0"
+            }];
+            this.renderSimulationTypes();
+            this.showError('Using fallback simulation types. Database connection may be unavailable.');
         }
     }
 
@@ -138,8 +206,9 @@ class PlatformApp {
         const section = document.getElementById('projectsSection');
         const grid = document.getElementById('projectsGrid');
 
-        if (this.currentUser.isGuest) {
-            section.style.display = 'none';
+        if (this.currentUser.isGuest || this.currentUser.mode === 'session-only') {
+            section.style.display = 'block';
+            grid.innerHTML = '<div class="info-message">📝 Guest mode: Projects are not saved. Create a user account to save your work.</div>';
             return;
         }
 
@@ -174,6 +243,14 @@ class PlatformApp {
             return;
         }
 
+        // Check if user is in session-only mode (no database)
+        if (this.currentUser.mode === 'session-only' || this.currentUser.isGuest) {
+            // For guest users or session-only mode, launch directly without creating a project
+            this.showSuccess('Launching simulation in guest mode...');
+            this.launchSimulation(typeId, `guest_${Date.now()}`);
+            return;
+        }
+
         try {
             const response = await this.apiRequest('POST', '/projects', {
                 name: `New ${type.name} Project`,
@@ -185,7 +262,13 @@ class PlatformApp {
             });
 
             if (response.error) {
-                this.showError(response.error);
+                if (response.mode === 'guest-only') {
+                    // If project creation fails due to database issues, launch in guest mode
+                    this.showSuccess('Launching simulation in guest mode (database unavailable)...');
+                    this.launchSimulation(typeId, `guest_${Date.now()}`);
+                } else {
+                    this.showError(response.error);
+                }
             } else {
                 this.showSuccess('Project created successfully!');
                 this.loadUserProjects();
@@ -194,7 +277,9 @@ class PlatformApp {
                 this.launchSimulation(typeId, response.id);
             }
         } catch (error) {
-            this.showError('Failed to create project. Please try again.');
+            // If API request fails, launch in guest mode
+            this.showSuccess('Launching simulation in guest mode...');
+            this.launchSimulation(typeId, `guest_${Date.now()}`);
         }
     }
 
@@ -263,6 +348,8 @@ class PlatformApp {
 
     async apiRequest(method, endpoint, data = {}, headers = {}) {
         const url = `${this.apiBaseUrl}${endpoint}`;
+        console.log(`Making API request: ${method} ${url}`, { data, headers });
+        
         const options = {
             method,
             headers: {
@@ -277,13 +364,17 @@ class PlatformApp {
 
         try {
             const response = await fetch(url, options);
+            console.log(`API response status: ${response.status}`);
             
             if (!response.ok) {
                 const errorData = await response.json();
+                console.error('API error response:', errorData);
                 throw new Error(errorData.error || `HTTP ${response.status}`);
             }
 
-            return await response.json();
+            const result = await response.json();
+            console.log('API response data:', result);
+            return result;
         } catch (error) {
             console.error(`API Request failed: ${method} ${endpoint}`, error);
             throw error;

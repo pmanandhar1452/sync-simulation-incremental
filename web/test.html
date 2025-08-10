@@ -3,85 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Test</title>
+    <title>API Test</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: #000;
-            color: white;
-            font-family: Arial, sans-serif;
-        }
-        
-        #canvas {
-            display: block;
-            width: 100vw;
-            height: 100vh;
-        }
-        
-        #info {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            border-radius: 10px;
-            z-index: 1000;
-        }
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
+    <h1>API Test Page</h1>
     
-    <div id="info">
-        <h3>Three.js Test</h3>
-        <p>If you can see a rotating cube, Three.js is working correctly!</p>
-    </div>
+    <button onclick="testHealth()">Test Health API</button>
+    <button onclick="testGuest()">Test Guest Login</button>
+    <button onclick="testSimulationTypes()">Test Simulation Types</button>
     
-    <script type="module">
-        import * as THREE from 'https://esm.sh/three@0.158.0';
+    <div id="results"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
         
-        // Create scene
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x000011);
-        
-        // Create camera
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 5;
-        
-        // Create renderer
-        const canvas = document.getElementById('canvas');
-        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        
-        // Create a simple cube
-        const geometry = new THREE.BoxGeometry();
-        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        const cube = new THREE.Mesh(geometry, material);
-        scene.add(cube);
-        
-        // Add lighting
-        const light = new THREE.AmbientLight(0x404040);
-        scene.add(light);
-        
-        // Animation loop
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            cube.rotation.x += 0.01;
-            cube.rotation.y += 0.01;
-            
-            renderer.render(scene, camera);
+        function log(message, isError = false) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${isError ? 'error' : 'success'}`;
+            div.textContent = message;
+            results.appendChild(div);
         }
         
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        async function testHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                log(`Health API: ${JSON.stringify(data)}`);
+            } catch (error) {
+                log(`Health API Error: ${error.message}`, true);
+            }
+        }
         
-        animate();
+        async function testGuest() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/guest`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: '{}'
+                });
+                const data = await response.json();
+                log(`Guest Login: ${JSON.stringify(data)}`);
+            } catch (error) {
+                log(`Guest Login Error: ${error.message}`, true);
+            }
+        }
+        
+        async function testSimulationTypes() {
+            try {
+                const response = await fetch(`${API_BASE}/simulation-types`);
+                const data = await response.json();
+                log(`Simulation Types: ${JSON.stringify(data)}`);
+            } catch (error) {
+                log(`Simulation Types Error: ${error.message}`, true);
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            log('Page loaded, testing APIs...');
+            setTimeout(testHealth, 500);
+            setTimeout(testGuest, 1000);
+            setTimeout(testSimulationTypes, 1500);
+        };
     </script>
 </body>
 </html>
