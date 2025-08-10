@@ -1,6 +1,6 @@
 import { ThreeJSRenderer } from './ThreeJSRenderer.js';
 
-// Simple concept implementations for the web
+// Web-specific concept implementations that interact with Three.js
 class WebCelestialBodyConcept {
     constructor(renderer) {
         this.renderer = renderer;
@@ -62,65 +62,83 @@ class WebCelestialBodyConcept {
     _getByType({ type }) {
         return Array.from(this.bodies.values()).filter(body => body.type === type);
     }
+
+    getAllBodies() {
+        return Array.from(this.bodies.values());
+    }
 }
 
 class WebSimulationConcept {
     constructor() {
         this.simulations = new Map();
-        this.isRunning = true;
-        this.time = 0;
-        this.speed = 1;
-        this.stepSize = 0.01;
+        this.currentTime = 0;
+        this.speed = 1.0;
+        this.paused = false;
+        this.lastUpdate = Date.now();
         console.log('WebSimulationConcept initialized');
     }
 
-    create({ id, time, speed, stepSize }) {
-        this.time = time;
+    create({ id, time, speed, paused, stepSize }) {
+        console.log(`Creating simulation: ${id}`, { time, speed, paused, stepSize });
+        const simData = { id, time, speed, paused, stepSize };
+        this.simulations.set(id, simData);
+        this.currentTime = time;
         this.speed = speed;
-        this.stepSize = stepSize;
-        console.log(`Simulation created: ${id}`, { time, speed, stepSize });
+        this.paused = paused;
         return { id };
     }
 
-    step({ id }) {
-        if (this.isRunning) {
-            this.time += this.stepSize * this.speed;
+    setSpeed({ id, speed }) {
+        const sim = this.simulations.get(id);
+        if (sim) {
+            sim.speed = speed;
+            this.speed = speed;
         }
         return { id };
     }
 
     pause({ id }) {
-        this.isRunning = false;
-        console.log('Simulation paused');
+        const sim = this.simulations.get(id);
+        if (sim) {
+            sim.paused = true;
+            this.paused = true;
+        }
         return { id };
     }
 
     resume({ id }) {
-        this.isRunning = true;
-        console.log('Simulation resumed');
+        const sim = this.simulations.get(id);
+        if (sim) {
+            sim.paused = false;
+            this.paused = false;
+        }
         return { id };
     }
 
-    setSpeed({ id, speed }) {
-        this.speed = speed;
-        console.log(`Simulation speed set to: ${speed}`);
+    step({ id }) {
+        const sim = this.simulations.get(id);
+        if (sim && !sim.paused) {
+            sim.time += sim.stepSize * sim.speed;
+            this.currentTime = sim.time;
+        }
         return { id };
     }
 
     reset({ id }) {
-        this.time = 0;
-        console.log('Simulation reset');
+        const sim = this.simulations.get(id);
+        if (sim) {
+            sim.time = 0;
+            this.currentTime = 0;
+        }
         return { id };
     }
 
-    _getById({ id }) {
-        return [{
-            id,
-            time: this.time,
+    getState() {
+        return {
+            currentTime: this.currentTime,
             speed: this.speed,
-            paused: !this.isRunning,
-            stepSize: this.stepSize
-        }];
+            paused: this.paused
+        };
     }
 }
 
@@ -131,126 +149,81 @@ class WebCameraConcept {
         console.log('WebCameraConcept initialized');
     }
 
-    create({ id, scene, position, target, fov, near, far, type }) {
-        const camera = { id, scene, position, target, fov, near, far, type };
-        this.cameras.set(id, camera);
-        console.log(`Camera created: ${id}`, { position, target });
+    create({ id, scene, position, target, fov, near, far, type, controlsEnabled, minDistance, maxDistance }) {
+        console.log(`Creating camera: ${id}`, { position, target, fov });
+        const cameraData = { id, scene, position, target, fov, near, far, type, controlsEnabled, minDistance, maxDistance };
+        this.cameras.set(id, cameraData);
         return { id };
     }
 
-    follow({ id, bodyId, distance }) {
-        console.log(`Camera following: ${bodyId} at distance: ${distance}`);
-        this.renderer.setCameraTarget(bodyId);
+    setTarget({ id, target }) {
+        const camera = this.cameras.get(id);
+        if (camera) {
+            camera.target = target;
+            this.renderer.setCameraTarget(target);
+        }
         return { id };
     }
 
-    zoom({ id, factor }) {
-        console.log(`Camera zoom: ${factor}`);
-        this.renderer.setZoom(factor);
+    setZoom({ id, zoom }) {
+        const camera = this.cameras.get(id);
+        if (camera) {
+            this.renderer.setZoom(zoom);
+        }
         return { id };
+    }
+
+    getState() {
+        return Array.from(this.cameras.values())[0] || {};
     }
 }
 
 // Main application class
 class SolarSystemApp {
     constructor() {
-        console.log('SolarSystemApp constructor called');
-        
-        this.canvas = document.getElementById('canvas');
-        console.log('Canvas element:', this.canvas);
-        
-        if (!this.canvas) {
-            console.error('Canvas element not found!');
-            return;
-        }
-        
-        console.log('Creating ThreeJSRenderer...');
-        this.renderer = new ThreeJSRenderer(this.canvas);
-        console.log('ThreeJSRenderer created');
-        
-        // Initialize concepts
-        console.log('Initializing concepts...');
+        this.renderer = new ThreeJSRenderer();
         this.celestialBody = new WebCelestialBodyConcept(this.renderer);
         this.simulation = new WebSimulationConcept();
         this.camera = new WebCameraConcept(this.renderer);
-        console.log('Concepts initialized');
         
-        this.setupControls();
+        this.animationId = null;
+        this.lastTime = 0;
+        this.fps = 60;
+        this.frameCount = 0;
+        this.lastFpsUpdate = Date.now();
+        
+        console.log('SolarSystemApp initialized');
+        this.init();
+    }
+
+    init() {
+        console.log('Initializing Solar System App...');
+        
+        // Initialize the solar system
         this.initializeSolarSystem();
-        this.startSimulation();
-    }
-
-    setupControls() {
-        console.log('Setting up controls...');
-        const speedSlider = document.getElementById('speed');
-        const speedValue = document.getElementById('speedValue');
-        const playPauseBtn = document.getElementById('playPause');
-        const resetBtn = document.getElementById('reset');
-        const cameraSelect = document.getElementById('cameraTarget');
-        const zoomSlider = document.getElementById('zoom');
-        const zoomValue = document.getElementById('zoomValue');
-
-        // Speed control
-        speedSlider.addEventListener('input', (e) => {
-            const speed = parseFloat(e.target.value);
-            speedValue.textContent = speed + 'x';
-            this.simulation.setSpeed({ id: 'main', speed });
-        });
-
-        // Play/Pause control
-        playPauseBtn.addEventListener('click', () => {
-            if (this.simulation.isRunning) {
-                this.simulation.pause({ id: 'main' });
-                playPauseBtn.textContent = 'Resume';
-                document.getElementById('status').textContent = 'Paused';
-            } else {
-                this.simulation.resume({ id: 'main' });
-                playPauseBtn.textContent = 'Pause';
-                document.getElementById('status').textContent = 'Running';
-            }
-        });
-
-        // Reset control
-        resetBtn.addEventListener('click', () => {
-            this.simulation.reset({ id: 'main' });
-        });
-
-        // Camera target control
-        cameraSelect.addEventListener('change', (e) => {
-            this.camera.follow({ id: 'main', bodyId: e.target.value, distance: 50 });
-        });
-
-        // Zoom control
-        zoomSlider.addEventListener('input', (e) => {
-            const zoom = parseFloat(e.target.value);
-            zoomValue.textContent = zoom + 'x';
-            this.camera.zoom({ id: 'main', factor: zoom });
-        });
         
-        console.log('Controls setup complete');
+        // Set up UI controls
+        this.setupUIControls();
+        
+        // Start the simulation loop
+        this.startSimulation();
+        
+        console.log('Solar System App initialization complete');
     }
 
-    async initializeSolarSystem() {
-        console.log('=== INITIALIZING SOLAR SYSTEM ===');
-
-        // Create simulation
-        console.log('Creating simulation...');
-        this.simulation.create({ id: 'main', time: 0, speed: 1, stepSize: 0.01 });
-
-        // Create camera
-        console.log('Creating camera...');
-        this.camera.create({
-            id: 'main',
-            scene: 'main',
-            position: { x: 0, y: 50, z: 100 },
-            target: { x: 0, y: 0, z: 0 },
-            fov: 75,
-            near: 0.1,
-            far: 1000,
-            type: 'perspective'
+    initializeSolarSystem() {
+        console.log('Creating solar system...');
+        
+        // Create main simulation
+        this.simulation.create({
+            id: 'sim_main',
+            time: 0,
+            speed: 1.0,
+            paused: false,
+            stepSize: 1
         });
 
-        // Create the Sun
+        // Create Sun
         console.log('Creating Sun...');
         this.celestialBody.create({
             id: 'sun',
@@ -260,9 +233,10 @@ class SolarSystemApp {
             radius: 696340,
             distance: 0,
             orbitalPeriod: 0,
-            rotationPeriod: 25.05,
+            inclination: 0,
+            rotationPeriod: 25,
             color: '#ffff00',
-            parent: ''
+            parent: null
         });
 
         // Create planets
@@ -294,62 +268,124 @@ class SolarSystemApp {
             });
         }
 
-        // Set initial camera position to see the sun
-        console.log('Setting camera to follow sun...');
-        this.camera.follow({ id: 'main', bodyId: 'sun', distance: 100 });
+        // Set initial camera target to Sun
+        this.camera.setTarget({ id: 'camera_main', target: 'sun' });
+    }
 
-        console.log('=== SOLAR SYSTEM INITIALIZATION COMPLETE ===');
-        console.log('Bodies created:', this.celestialBody.bodies.size);
-        console.log('All bodies:', Array.from(this.celestialBody.bodies.keys()));
+    setupUIControls() {
+        console.log('Setting up UI controls...');
+        
+        // Speed control
+        const speedControl = document.getElementById('speedControl');
+        const speedValue = document.getElementById('speedValue');
+        
+        speedControl.addEventListener('input', (e) => {
+            const speed = parseFloat(e.target.value);
+            this.simulation.setSpeed({ id: 'sim_main', speed });
+            speedValue.textContent = `${speed.toFixed(1)}x`;
+        });
+
+        // Play/Pause button
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        playPauseBtn.addEventListener('click', () => {
+            if (this.simulation.paused) {
+                this.simulation.resume({ id: 'sim_main' });
+                playPauseBtn.textContent = '⏸️ Pause';
+            } else {
+                this.simulation.pause({ id: 'sim_main' });
+                playPauseBtn.textContent = '▶️ Play';
+            }
+        });
+
+        // Reset button
+        const resetBtn = document.getElementById('resetBtn');
+        resetBtn.addEventListener('click', () => {
+            this.simulation.reset({ id: 'sim_main' });
+        });
+
+        // Camera target selection
+        const cameraTarget = document.getElementById('cameraTarget');
+        cameraTarget.addEventListener('change', (e) => {
+            this.camera.setTarget({ id: 'camera_main', target: e.target.value });
+        });
+
+        // Zoom control
+        const zoomControl = document.getElementById('zoomControl');
+        const zoomValue = document.getElementById('zoomValue');
+        
+        zoomControl.addEventListener('input', (e) => {
+            const zoom = parseInt(e.target.value);
+            this.camera.setZoom({ id: 'camera_main', zoom });
+            zoomValue.textContent = `${zoom}%`;
+        });
     }
 
     startSimulation() {
         console.log('Starting simulation loop...');
+        this.animate();
+    }
+
+    animate() {
+        this.animationId = requestAnimationFrame(() => this.animate());
         
-        const updateInfo = () => {
-            const simData = this.simulation._getById({ id: 'main' })[0];
-            if (simData) {
-                document.getElementById('time').textContent = Math.floor(simData.time) + ' days';
-                document.getElementById('status').textContent = simData.paused ? 'Paused' : 'Running';
-            }
-        };
+        const currentTime = Date.now();
+        const deltaTime = currentTime - this.lastTime;
+        this.lastTime = currentTime;
 
-        const simulationLoop = () => {
-            // Step simulation
-            this.simulation.step({ id: 'main' });
-            
-            // Update all planet positions
-            const simData = this.simulation._getById({ id: 'main' })[0];
-            if (simData) {
-                const planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
-                planets.forEach(planetId => {
-                    this.celestialBody.orbit({ id: planetId, time: simData.time });
-                });
-            }
+        // Update FPS counter
+        this.frameCount++;
+        if (currentTime - this.lastFpsUpdate >= 1000) {
+            this.fps = this.frameCount;
+            this.frameCount = 0;
+            this.lastFpsUpdate = currentTime;
+            this.updateInfoDisplay();
+        }
 
-            // Update info display
-            updateInfo();
+        // Step simulation
+        this.simulation.step({ id: 'sim_main' });
 
-            // Continue loop
-            if (this.simulation.isRunning) {
-                requestAnimationFrame(simulationLoop);
-            }
-        };
+        // Update planet positions
+        const planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
+        for (const planetId of planets) {
+            this.celestialBody.orbit({ id: planetId, time: this.simulation.currentTime });
+        }
 
-        // Start the simulation loop
-        simulationLoop();
-        console.log('Simulation loop started');
+        // Render the scene
+        this.renderer.animate();
+    }
+
+    updateInfoDisplay() {
+        const timeDisplay = document.getElementById('timeDisplay');
+        const fpsDisplay = document.getElementById('fpsDisplay');
+        const objectsDisplay = document.getElementById('objectsDisplay');
+
+        if (timeDisplay) {
+            const days = Math.floor(this.simulation.currentTime);
+            timeDisplay.textContent = `${days} days`;
+        }
+
+        if (fpsDisplay) {
+            fpsDisplay.textContent = this.fps;
+        }
+
+        if (objectsDisplay) {
+            objectsDisplay.textContent = this.celestialBody.bodies.size;
+        }
+    }
+
+    dispose() {
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+        }
+        this.renderer.dispose();
     }
 }
 
-// Initialize the application when the page loads
-window.addEventListener('load', () => {
-    console.log('=== PAGE LOADED ===');
-    console.log('Starting Solar System App...');
-    try {
-        new SolarSystemApp();
-        console.log('SolarSystemApp created successfully');
-    } catch (error) {
-        console.error('Error starting Solar System App:', error);
-    }
-});
+// Initialize the application
+console.log('Starting Solar System Application...');
+try {
+    window.solarSystemApp = new SolarSystemApp();
+    console.log('Solar System Application started successfully');
+} catch (error) {
+    console.error('Failed to start Solar System Application:', error);
+}

@@ -1,0 +1,58 @@
+<concept_spec>
+
+concept Session
+
+purpose
+    to manage user sessions, navigation state, and current simulation context for the simulation platform
+
+state
+    a set of Sessions with
+        an id String
+        a userId String
+        a currentProject String
+        a currentView String
+        a navigationHistory Array
+        a preferences Object
+        a createdAt Number
+        a lastActivity Number
+        a isActive Boolean
+
+actions
+    create (id: String, userId: String) : (id: String)
+        create a new user session
+        return the session id
+    setCurrentProject (id: String, projectId: String) : (id: String)
+        set the current active project
+        return the session id
+    setCurrentView (id: String, view: String) : (id: String)
+        set the current view (menu, simulation, project-list, etc.)
+        return the session id
+    navigateTo (id: String, view: String, projectId: String) : (id: String)
+        navigate to a specific view and optionally set project
+        return the session id
+    updatePreferences (id: String, preferences: Object) : (id: String)
+        update session preferences
+        return the session id
+    updateActivity (id: String) : (id: String)
+        update last activity timestamp
+        return the session id
+    end (id: String) : (id: String)
+        end the session
+        return the session id
+
+queries
+    _getById (id: String) : (id: String, userId: String, currentProject: String, currentView: String, navigationHistory: Array, preferences: Object, createdAt: Number, lastActivity: Number, isActive: Boolean)
+        get session by id
+    _getByUser (userId: String) : (id: String, userId: String, currentProject: String, currentView: String, navigationHistory: Array, preferences: Object, createdAt: Number, lastActivity: Number, isActive: Boolean)
+        get all sessions for a user
+    _getActive () : (id: String, userId: String, currentProject: String, currentView: String, navigationHistory: Array, preferences: Object, createdAt: Number, lastActivity: Number, isActive: Boolean)
+        get all active sessions
+    _getByProject (projectId: String) : (id: String, userId: String, currentProject: String, currentView: String, navigationHistory: Array, preferences: Object, createdAt: Number, lastActivity: Number, isActive: Boolean)
+        get sessions currently viewing a specific project
+
+operational principle
+    after create (id: "sess1", userId: "user1") : (id: "sess1")
+    and navigateTo (id: "sess1", view: "simulation", projectId: "proj1") : (id: "sess1")
+    then _getById (id: "sess1") shows the session with current project and view set for simulation
+
+</concept_spec>

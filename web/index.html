@@ -8,146 +8,302 @@
         body {
             margin: 0;
             padding: 0;
-            background: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000011;
             color: white;
-            font-family: Arial, sans-serif;
             overflow: hidden;
         }
-        
+
         #canvas {
             display: block;
             width: 100vw;
             height: 100vh;
         }
-        
-        #controls {
+
+        .ui-overlay {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            border-radius: 10px;
-            z-index: 1000;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
         }
-        
+
+        .ui-panel {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .top-left {
+            top: 0;
+            left: 0;
+        }
+
+        .top-right {
+            top: 0;
+            right: 0;
+        }
+
+        .bottom-left {
+            bottom: 0;
+            left: 0;
+        }
+
+        .bottom-right {
+            bottom: 0;
+            right: 0;
+        }
+
         .control-group {
             margin-bottom: 15px;
         }
-        
-        label {
+
+        .control-group label {
             display: block;
             margin-bottom: 5px;
-            font-weight: bold;
+            font-size: 14px;
+            color: #ccc;
         }
-        
-        input, button, select {
+
+        .control-group input, .control-group select {
             width: 100%;
             padding: 8px;
-            margin-bottom: 10px;
-            border: none;
+            border: 1px solid #333;
             border-radius: 5px;
-            background: #333;
+            background: rgba(255, 255, 255, 0.1);
             color: white;
+            font-size: 14px;
         }
-        
-        button {
-            background: #0077be;
+
+        .control-group input:focus, .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
             cursor: pointer;
-            transition: background 0.3s;
+            font-size: 14px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            transition: transform 0.2s ease;
         }
-        
-        button:hover {
-            background: #005a8b;
+
+        .btn:hover {
+            transform: translateY(-1px);
         }
-        
-        button:disabled {
-            background: #555;
-            cursor: not-allowed;
+
+        .btn-secondary {
+            background: #718096;
         }
-        
-        #info {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            border-radius: 10px;
-            z-index: 1000;
-            min-width: 200px;
+
+        .btn-danger {
+            background: #e53e3e;
         }
-        
-        .info-item {
+
+        .info-display {
+            font-size: 12px;
+            color: #ccc;
+            line-height: 1.4;
+        }
+
+        .project-info {
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            padding: 10px;
+            border-radius: 5px;
             margin-bottom: 10px;
         }
-        
-        .info-label {
-            font-weight: bold;
-            color: #0077be;
+
+        .project-info h3 {
+            margin: 0 0 5px 0;
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        .project-info p {
+            margin: 0;
+            font-size: 12px;
+        }
+
+        .mouse-controls {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .mouse-controls h4 {
+            margin: 0 0 5px 0;
+            font-size: 12px;
+            color: #667eea;
+        }
+
+        .mouse-controls ul {
+            margin: 0;
+            padding-left: 15px;
+            font-size: 11px;
+        }
+
+        .mouse-controls li {
+            margin-bottom: 2px;
         }
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
     
-    <div id="controls">
-        <h3>Simulation Controls</h3>
-        
-        <div class="control-group">
-            <label for="speed">Speed:</label>
-            <input type="range" id="speed" min="0" max="10" step="0.1" value="1">
-            <span id="speedValue">1x</span>
+    <div class="ui-overlay">
+        <!-- Top Left - Project Info and Back Button -->
+        <div class="ui-panel top-left">
+            <div class="project-info">
+                <h3>🌌 Solar System Project</h3>
+                <p id="projectDetails">Loading project details...</p>
+            </div>
+            <button class="btn btn-secondary" onclick="goBackToPlatform()">← Back to Platform</button>
         </div>
-        
-        <div class="control-group">
-            <button id="playPause">Pause</button>
-            <button id="reset">Reset</button>
+
+        <!-- Top Right - Simulation Controls -->
+        <div class="ui-panel top-right">
+            <div class="control-group">
+                <label for="speedControl">Simulation Speed</label>
+                <input type="range" id="speedControl" min="0" max="5" step="0.1" value="1">
+                <span id="speedValue">1.0x</span>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn" id="playPauseBtn">⏸️ Pause</button>
+                <button class="btn" id="resetBtn">🔄 Reset</button>
+            </div>
+
+            <div class="control-group">
+                <label for="cameraTarget">Camera Target</label>
+                <select id="cameraTarget">
+                    <option value="sun">Sun</option>
+                    <option value="mercury">Mercury</option>
+                    <option value="venus">Venus</option>
+                    <option value="earth">Earth</option>
+                    <option value="mars">Mars</option>
+                    <option value="jupiter">Jupiter</option>
+                    <option value="saturn">Saturn</option>
+                    <option value="uranus">Uranus</option>
+                    <option value="neptune">Neptune</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="zoomControl">Zoom</label>
+                <input type="range" id="zoomControl" min="10" max="200" value="100">
+                <span id="zoomValue">100%</span>
+            </div>
         </div>
-        
-        <div class="control-group">
-            <label for="cameraTarget">Camera Target:</label>
-            <select id="cameraTarget">
-                <option value="sun">Sun</option>
-                <option value="mercury">Mercury</option>
-                <option value="venus">Venus</option>
-                <option value="earth">Earth</option>
-                <option value="mars">Mars</option>
-                <option value="jupiter">Jupiter</option>
-                <option value="saturn">Saturn</option>
-                <option value="uranus">Uranus</option>
-                <option value="neptune">Neptune</option>
-            </select>
+
+        <!-- Bottom Left - Info Display -->
+        <div class="ui-panel bottom-left">
+            <div class="info-display">
+                <div><strong>Time:</strong> <span id="timeDisplay">0 days</span></div>
+                <div><strong>FPS:</strong> <span id="fpsDisplay">60</span></div>
+                <div><strong>Objects:</strong> <span id="objectsDisplay">9</span></div>
+            </div>
+            
+            <div class="mouse-controls">
+                <h4>Mouse Controls</h4>
+                <ul>
+                    <li><strong>Left Click + Drag:</strong> Rotate camera</li>
+                    <li><strong>Right Click + Drag:</strong> Pan camera</li>
+                    <li><strong>Scroll:</strong> Zoom in/out</li>
+                    <li><strong>Double Click:</strong> Focus on object</li>
+                </ul>
+            </div>
         </div>
-        
-        <div class="control-group">
-            <label for="zoom">Zoom:</label>
-            <input type="range" id="zoom" min="0.1" max="5" step="0.1" value="1">
-            <span id="zoomValue">1x</span>
-        </div>
-        
-        <div class="control-group">
-            <h4>Mouse Controls:</h4>
-            <p><strong>Left Click + Drag:</strong> Orbit around target</p>
-            <p><strong>Right Click + Drag:</strong> Pan camera</p>
-            <p><strong>Scroll Wheel:</strong> Zoom in/out</p>
+
+        <!-- Bottom Right - Save/Load Controls -->
+        <div class="ui-panel bottom-right">
+            <div class="control-group">
+                <button class="btn" onclick="saveProject()">💾 Save Project</button>
+                <button class="btn btn-secondary" onclick="exportProject()">📤 Export</button>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn btn-danger" onclick="deleteProject()">🗑️ Delete Project</button>
+            </div>
         </div>
     </div>
-    
-    <div id="info">
-        <h3>Simulation Info</h3>
-        <div class="info-item">
-            <span class="info-label">Time:</span>
-            <span id="time">0 days</span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Status:</span>
-            <span id="status">Running</span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">FPS:</span>
-            <span id="fps">60</span>
-        </div>
-    </div>
-    
-    <script type="module" src="./main.js"></script>
+
+    <script type="module" src="main.js"></script>
+    <script>
+        // Platform integration functions
+        function goBackToPlatform() {
+            window.location.href = 'platform.html';
+        }
+
+        function saveProject() {
+            // Get project ID from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project');
+            
+            if (projectId) {
+                // In a real implementation, this would save the current simulation state
+                console.log('Saving project:', projectId);
+                alert('Project saved successfully!');
+            } else {
+                alert('No project ID found. This might be a guest session.');
+            }
+        }
+
+        function exportProject() {
+            // Export project configuration
+            const config = {
+                simulation: window.solarSystemApp?.simulation?.getState(),
+                camera: window.solarSystemApp?.camera?.getState(),
+                bodies: window.solarSystemApp?.celestialBody?.getAllBodies()
+            };
+            
+            const dataStr = JSON.stringify(config, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = 'solar-system-project.json';
+            link.click();
+        }
+
+        function deleteProject() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project');
+            
+            if (projectId && confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+                console.log('Deleting project:', projectId);
+                // In a real implementation, this would delete the project
+                alert('Project deleted successfully!');
+                goBackToPlatform();
+            } else if (!projectId) {
+                alert('No project to delete. This is a guest session.');
+            }
+        }
+
+        // Update project details on load
+        window.addEventListener('load', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project');
+            
+            if (projectId) {
+                document.getElementById('projectDetails').textContent = `Project ID: ${projectId}`;
+            } else {
+                document.getElementById('projectDetails').textContent = 'Guest Session - Changes will not be saved';
+            }
+        });
+    </script>
 </body>
 </html>

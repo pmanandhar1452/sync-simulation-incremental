@@ -1,0 +1,21 @@
+{
+  "version": "5",
+  "remote": {
+    "https://deno.land/std@0.206.0/dotenv/mod.ts": "039468f5c87d39b69d7ca6c3d68ebca82f206ec0ff5e011d48205eea292ea5a6",
+    "https://deno.land/std@0.207.0/dotenv/mod.ts": "039468f5c87d39b69d7ca6c3d68ebca82f206ec0ff5e011d48205eea292ea5a6",
+    "https://deno.land/std@0.208.0/dotenv/mod.ts": "039468f5c87d39b69d7ca6c3d68ebca82f206ec0ff5e011d48205eea292ea5a6"
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@types/body-parser@^1.19.2",
+        "npm:@types/cors@^2.8.13",
+        "npm:@types/express@^4.17.17",
+        "npm:body-parser@^1.20.2",
+        "npm:cors@^2.8.5",
+        "npm:express@^4.18.2",
+        "npm:mysql2@^3.6.0"
+      ]
+    }
+  }
+}

@@ -3,32 +3,33 @@
 concept API
 
 purpose
-    to bootstrap HTTP-like requests and capture async responses from the web app
+    to bootstrap generic API requests and allow asynchronous responses for the simulation platform including user management, project management, and simulation type management
 
 state
     a set of Requests with
-        a request String
-        a method String
-        a path String
-        a input Json
-        a output Json
+        a callback Function
+        an Input set of Parameters
+        an Output set of Parameters
+    a set of Parameters with
+        ...any arguments...
 
 actions
-    request (request: String, method: String, path: String, input: Json) : (request: String)
-        register an incoming request to start a new flow
-        return request
-    response (request: String, output: Json) : (request: String)
-        record the output that should be returned to the caller
-        return request
+    request (callback: Function, ...any input arguments...) : (request: Requests)
+        generate a fresh request associated with the input arguments
+        register the callback with the request ID
+        return the request ID
+    response (request: Requests, ...any output arguments...) : (request: Requests)
+        save the output arguments, and await the callback to give them to the requester
+        return the request ID
 
 queries
-    _get (request: String) : (request: String, method: String, path: String, input: Json, output: Json)
-        fetch a stored request with output
+    _get (request: Requests) : (callback: Function, Input: set of Parameters, Output: set of Parameters)
+        get request details by ID
 
 operational principle
-    after request (request: r, method: "POST", path: "/quizzes", input: {}) : (request: r)
-    and response (request: r, output: { ok: true }) : (request: r)
-    then _get (request: r) shows output { ok: true }
+    after request (callback: function, method: "user_login", username: "alice", password: "secret") : (request: req1)
+    and response (request: req1, success: true, userId: "user1", token: "abc123") : (request: req1)
+    then _get (request: req1) shows the completed login request with user authentication response
 
 </concept_spec>
 

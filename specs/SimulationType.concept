@@ -1,0 +1,53 @@
+<concept_spec>
+
+concept SimulationType
+
+purpose
+    to manage different types of simulations available in the platform, their configurations, and metadata
+
+state
+    a set of Types with
+        an id String
+        a name String
+        a description String
+        a category String
+        a icon String
+        a thumbnail String
+        a isActive Boolean
+        a defaultConfig Object
+        a requirements Object
+        a version String
+
+actions
+    register (id: String, name: String, description: String, category: String, icon: String, thumbnail: String, defaultConfig: Object, requirements: Object, version: String) : (id: String)
+        register a new simulation type
+        return the type id
+    update (id: String, name: String, description: String, category: String, icon: String, thumbnail: String, defaultConfig: Object, requirements: Object, version: String) : (id: String)
+        update simulation type metadata
+        return the type id
+    activate (id: String) : (id: String)
+        activate a simulation type
+        return the type id
+    deactivate (id: String) : (id: String)
+        deactivate a simulation type
+        return the type id
+    updateDefaultConfig (id: String, defaultConfig: Object) : (id: String)
+        update the default configuration for a simulation type
+        return the type id
+
+queries
+    _getById (id: String) : (id: String, name: String, description: String, category: String, icon: String, thumbnail: String, isActive: Boolean, defaultConfig: Object, requirements: Object, version: String)
+        get simulation type by id
+    _getActive () : (id: String, name: String, description: String, category: String, icon: String, thumbnail: String, isActive: Boolean, defaultConfig: Object, requirements: Object, version: String)
+        get all active simulation types
+    _getByCategory (category: String) : (id: String, name: String, description: String, category: String, icon: String, thumbnail: String, isActive: Boolean, defaultConfig: Object, requirements: Object, version: String)
+        get all simulation types in a category
+    _getFeatured () : (id: String, name: String, description: String, category: String, icon: String, thumbnail: String, isActive: Boolean, defaultConfig: Object, requirements: Object, version: String)
+        get featured simulation types
+
+operational principle
+    after register (id: "solar-system", name: "Solar System", description: "Interactive solar system simulation", category: "astronomy", icon: "🌞", thumbnail: "solar-system.jpg", defaultConfig: {speed: 1.0}, requirements: {threejs: true}, version: "1.0") : (id: "solar-system")
+    and activate (id: "solar-system") : (id: "solar-system")
+    then _getActive () shows the solar system simulation type as available for project creation
+
+</concept_spec>

@@ -1,0 +1,62 @@
+<concept_spec>
+
+concept Database
+
+purpose
+    to manage database connections, queries, and transactions for persistent data storage in the simulation platform
+
+state
+    a set of Connections with
+        an id String
+        a host String
+        a port Number
+        a database String
+        a username String
+        a isConnected Boolean
+        a lastUsed Number
+    a set of Queries with
+        an id String
+        a connection String
+        a sql String
+        a parameters Object
+        a result Object
+        a executedAt Number
+
+actions
+    connect (id: String, host: String, port: Number, database: String, username: String, password: String) : (id: String)
+        establish a database connection
+        return the connection id
+    connect (id: String, host: String, port: Number, database: String, username: String, password: String) : (error: String)
+        if connection fails, return error message
+    disconnect (id: String) : (id: String)
+        close a database connection
+        return the connection id
+    execute (id: String, connection: String, sql: String, parameters: Object) : (id: String, result: Object)
+        execute a SQL query with parameters
+        return the query id and result
+    execute (id: String, connection: String, sql: String, parameters: Object) : (error: String)
+        if query execution fails, return error message
+    beginTransaction (connection: String) : (transactionId: String)
+        begin a database transaction
+        return the transaction id
+    commitTransaction (connection: String, transactionId: String) : (transactionId: String)
+        commit a database transaction
+        return the transaction id
+    rollbackTransaction (connection: String, transactionId: String) : (transactionId: String)
+        rollback a database transaction
+        return the transaction id
+
+queries
+    _getConnection (id: String) : (id: String, host: String, port: Number, database: String, username: String, isConnected: Boolean, lastUsed: Number)
+        get database connection by id
+    _getActiveConnections () : (id: String, host: String, port: Number, database: String, username: String, isConnected: Boolean, lastUsed: Number)
+        get all active database connections
+    _getQuery (id: String) : (id: String, connection: String, sql: String, parameters: Object, result: Object, executedAt: Number)
+        get query by id
+
+operational principle
+    after connect (id: "db1", host: "localhost", port: 3306, database: "simulations", username: "user", password: "pass") : (id: "db1")
+    and execute (id: "q1", connection: "db1", sql: "SELECT * FROM users", parameters: {}) : (id: "q1", result: {rows: []})
+    then _getConnection (id: "db1") shows an active connection and _getQuery (id: "q1") shows the executed query with results
+
+</concept_spec>

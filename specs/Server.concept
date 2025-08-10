@@ -1,0 +1,70 @@
+<concept_spec>
+
+concept Server
+
+purpose
+    to manage HTTP server functionality, API endpoints, and request handling for the simulation platform backend
+
+state
+    a set of Servers with
+        an id String
+        a port Number
+        a host String
+        a isRunning Boolean
+        a startTime Number
+        a config Object
+    a set of Routes with
+        an id String
+        a server String
+        a method String
+        a path String
+        a handler Function
+        a middleware Array
+    a set of Requests with
+        an id String
+        a server String
+        a method String
+        a path String
+        a headers Object
+        a body Object
+        a timestamp Number
+        a response Object
+
+actions
+    start (id: String, port: Number, host: String, config: Object) : (id: String)
+        start an HTTP server
+        return the server id
+    start (id: String, port: Number, host: String, config: Object) : (error: String)
+        if server start fails, return error message
+    stop (id: String) : (id: String)
+        stop an HTTP server
+        return the server id
+    addRoute (id: String, server: String, method: String, path: String, handler: Function, middleware: Array) : (id: String)
+        add a route to the server
+        return the route id
+    handleRequest (id: String, server: String, method: String, path: String, headers: Object, body: Object) : (id: String, response: Object)
+        handle an incoming HTTP request
+        return the request id and response
+    handleRequest (id: String, server: String, method: String, path: String, headers: Object, body: Object) : (error: String)
+        if request handling fails, return error message
+    setMiddleware (id: String, server: String, middleware: Array) : (id: String)
+        set global middleware for a server
+        return the server id
+
+queries
+    _getServer (id: String) : (id: String, port: Number, host: String, isRunning: Boolean, startTime: Number, config: Object)
+        get server by id
+    _getRunningServers () : (id: String, port: Number, host: String, isRunning: Boolean, startTime: Number, config: Object)
+        get all running servers
+    _getRoutes (server: String) : (id: String, server: String, method: String, path: String, handler: Function, middleware: Array)
+        get all routes for a server
+    _getRequest (id: String) : (id: String, server: String, method: String, path: String, headers: Object, body: Object, timestamp: Number, response: Object)
+        get request by id
+
+operational principle
+    after start (id: "server1", port: 3000, host: "localhost", config: {}) : (id: "server1")
+    and addRoute (id: "route1", server: "server1", method: "GET", path: "/api/users", handler: function, middleware: []) : (id: "route1")
+    and handleRequest (id: "req1", server: "server1", method: "GET", path: "/api/users", headers: {}, body: {}) : (id: "req1", response: {status: 200, data: []})
+    then _getServer (id: "server1") shows a running server and _getRequest (id: "req1") shows the handled request with response
+
+</concept_spec>

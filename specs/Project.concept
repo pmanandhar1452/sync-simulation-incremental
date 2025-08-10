@@ -1,0 +1,59 @@
+<concept_spec>
+
+concept Project
+
+purpose
+    to manage simulation projects, their metadata, and user ownership for the simulation platform
+
+state
+    a set of Projects with
+        an id String
+        a name String
+        a description String
+        a type String
+        a userId String
+        a createdAt Number
+        a updatedAt Number
+        a isPublic Boolean
+        a thumbnail String
+        a config Object
+
+actions
+    create (id: String, name: String, description: String, type: String, userId: String, config: Object) : (id: String)
+        create a new simulation project
+        return the project id
+    update (id: String, name: String, description: String, config: Object) : (id: String)
+        update project metadata and configuration
+        return the project id
+    update (id: String, name: String, description: String, config: Object) : (error: String)
+        if project doesn't exist or user doesn't have permission, return error
+    delete (id: String, userId: String) : (id: String)
+        delete a project if user owns it
+        return the project id
+    delete (id: String, userId: String) : (error: String)
+        if project doesn't exist or user doesn't have permission, return error
+    setPublic (id: String, isPublic: Boolean) : (id: String)
+        set project visibility
+        return the project id
+    updateThumbnail (id: String, thumbnail: String) : (id: String)
+        update project thumbnail image
+        return the project id
+
+queries
+    _getById (id: String) : (id: String, name: String, description: String, type: String, userId: String, createdAt: Number, updatedAt: Number, isPublic: Boolean, thumbnail: String, config: Object)
+        get project by id
+    _getByUser (userId: String) : (id: String, name: String, description: String, type: String, userId: String, createdAt: Number, updatedAt: Number, isPublic: Boolean, thumbnail: String, config: Object)
+        get all projects owned by a user
+    _getByType (type: String) : (id: String, name: String, description: String, type: String, userId: String, createdAt: Number, updatedAt: Number, isPublic: Boolean, thumbnail: String, config: Object)
+        get all projects of a specific type
+    _getPublic () : (id: String, name: String, description: String, type: String, userId: String, createdAt: Number, updatedAt: Number, isPublic: Boolean, thumbnail: String, config: Object)
+        get all public projects
+    _getRecent (limit: Number) : (id: String, name: String, description: String, type: String, userId: String, createdAt: Number, updatedAt: Number, isPublic: Boolean, thumbnail: String, config: Object)
+        get most recently updated projects
+
+operational principle
+    after create (id: "proj1", name: "My Solar System", description: "A basic solar system simulation", type: "solar-system", userId: "user1", config: {}) : (id: "proj1")
+    and update (id: "proj1", name: "Updated Solar System", description: "An improved solar system", config: {speed: 1.0}) : (id: "proj1")
+    then _getById (id: "proj1") shows the updated project with new name, description, and config
+
+</concept_spec>
