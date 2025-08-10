@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System Debug</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        
+        #canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+        
+        #console {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            max-width: 600px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div id="info">
+        <h3>Solar System Debug</h3>
+        <p>Check the console below for debug information.</p>
+        <button onclick="testThreeJS()">Test Three.js</button>
+        <button onclick="createSimpleSolarSystem()">Create Simple Solar System</button>
+        <button onclick="clearScene()">Clear Scene</button>
+    </div>
+    
+    <div id="console">
+        <div>Console output will appear here...</div>
+    </div>
+    
+    <script type="module">
+        import * as THREE from 'https://esm.sh/three@0.158.0';
+        import { OrbitControls } from 'https://esm.sh/three@0.158.0/examples/jsm/controls/OrbitControls.js';
+        
+        let scene, camera, renderer, controls;
+        let bodies = new Map();
+        
+        function log(message) {
+            console.log(message);
+            const consoleDiv = document.getElementById('console');
+            consoleDiv.innerHTML += '<div>' + message + '</div>';
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+        
+        function init() {
+            log('Initializing Three.js...');
+            
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000011);
+            log('Scene created');
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 50, 100);
+            log('Camera created at position:', camera.position);
+            
+            // Create renderer
+            const canvas = document.getElementById('canvas');
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            log('Renderer created');
+            
+            // Setup orbit controls
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 10;
+            controls.maxDistance = 500;
+            log('Orbit controls created');
+            
+            // Add lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(100, 100, 100);
+            scene.add(directionalLight);
+            log('Lighting added');
+            
+            // Start animation loop
+            animate();
+            log('Animation loop started');
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Update controls
+            controls.update();
+            
+            renderer.render(scene, camera);
+        }
+        
+        function testThreeJS() {
+            log('Testing Three.js with a simple cube...');
+            
+            // Create a simple cube
+            const geometry = new THREE.BoxGeometry(10, 10, 10);
+            const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            const cube = new THREE.Mesh(geometry, material);
+            cube.position.set(0, 0, 0);
+            scene.add(cube);
+            
+            log('Green cube added at center');
+            log('Scene children count:', scene.children.length);
+            log('Try using your mouse to orbit around the cube!');
+        }
+        
+        function createSimpleSolarSystem() {
+            log('Creating simple solar system...');
+            
+            // Create Sun
+            const sunGeometry = new THREE.SphereGeometry(20, 32, 32);
+            const sunMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xffff00,
+                emissive: 0xffff00,
+                emissiveIntensity: 0.5
+            });
+            const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+            sun.position.set(0, 0, 0);
+            scene.add(sun);
+            bodies.set('sun', sun);
+            log('Sun created at position:', sun.position);
+            
+            // Create Earth
+            const earthGeometry = new THREE.SphereGeometry(5, 32, 32);
+            const earthMaterial = new THREE.MeshLambertMaterial({ color: 0x0077be });
+            const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+            earth.position.set(50, 0, 0);
+            scene.add(earth);
+            bodies.set('earth', earth);
+            log('Earth created at position:', earth.position);
+            
+            // Create orbit line
+            const orbitGeometry = new THREE.BufferGeometry();
+            const points = [];
+            for (let i = 0; i <= 64; i++) {
+                const angle = (i / 64) * Math.PI * 2;
+                const x = 50 * Math.cos(angle);
+                const z = 50 * Math.sin(angle);
+                points.push(new THREE.Vector3(x, 0, z));
+            }
+            orbitGeometry.setFromPoints(points);
+            const orbitMaterial = new THREE.LineBasicMaterial({ 
+                color: 0x888888,  // Much brighter gray
+                transparent: true,
+                opacity: 0.7      // Much more opaque
+            });
+            const orbit = new THREE.Line(orbitGeometry, orbitMaterial);
+            scene.add(orbit);
+            log('Orbit line created');
+            
+            log('Simple solar system created');
+            log('Total scene children:', scene.children.length);
+            log('Bodies created:', bodies.size);
+            log('Use mouse to orbit around the solar system!');
+        }
+        
+        function clearScene() {
+            log('Clearing scene...');
+            while(scene.children.length > 0) {
+                scene.remove(scene.children[0]);
+            }
+            bodies.clear();
+            log('Scene cleared');
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            log('Page loaded, initializing...');
+            init();
+        });
+        
+        // Make functions global for button access
+        window.testThreeJS = testThreeJS;
+        window.createSimpleSolarSystem = createSimpleSolarSystem;
+        window.clearScene = clearScene;
+    </script>
+</body>
+</html>

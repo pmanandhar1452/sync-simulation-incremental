@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System Simulation</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        #canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, button, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #333;
+            color: white;
+        }
+        
+        button {
+            background: #0077be;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #005a8b;
+        }
+        
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        
+        #info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            min-width: 200px;
+        }
+        
+        .info-item {
+            margin-bottom: 10px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #0077be;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div id="controls">
+        <h3>Simulation Controls</h3>
+        
+        <div class="control-group">
+            <label for="speed">Speed:</label>
+            <input type="range" id="speed" min="0" max="10" step="0.1" value="1">
+            <span id="speedValue">1x</span>
+        </div>
+        
+        <div class="control-group">
+            <button id="playPause">Pause</button>
+            <button id="reset">Reset</button>
+        </div>
+        
+        <div class="control-group">
+            <label for="cameraTarget">Camera Target:</label>
+            <select id="cameraTarget">
+                <option value="sun">Sun</option>
+                <option value="mercury">Mercury</option>
+                <option value="venus">Venus</option>
+                <option value="earth">Earth</option>
+                <option value="mars">Mars</option>
+                <option value="jupiter">Jupiter</option>
+                <option value="saturn">Saturn</option>
+                <option value="uranus">Uranus</option>
+                <option value="neptune">Neptune</option>
+            </select>
+        </div>
+        
+        <div class="control-group">
+            <label for="zoom">Zoom:</label>
+            <input type="range" id="zoom" min="0.1" max="5" step="0.1" value="1">
+            <span id="zoomValue">1x</span>
+        </div>
+        
+        <div class="control-group">
+            <h4>Mouse Controls:</h4>
+            <p><strong>Left Click + Drag:</strong> Orbit around target</p>
+            <p><strong>Right Click + Drag:</strong> Pan camera</p>
+            <p><strong>Scroll Wheel:</strong> Zoom in/out</p>
+        </div>
+    </div>
+    
+    <div id="info">
+        <h3>Simulation Info</h3>
+        <div class="info-item">
+            <span class="info-label">Time:</span>
+            <span id="time">0 days</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Status:</span>
+            <span id="status">Running</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">FPS:</span>
+            <span id="fps">60</span>
+        </div>
+    </div>
+    
+    <script type="module" src="./main.js"></script>
+</body>
+</html>

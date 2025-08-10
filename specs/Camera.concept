@@ -1,0 +1,60 @@
+<concept_spec>
+
+concept Camera
+
+purpose
+    to manage camera positioning, orientation, and interactive controls for viewing the solar system with mouse-based navigation
+
+state
+    a set of Cameras with
+        an id String
+        a scene String
+        a position Vector3
+        a target Vector3
+        a fov Number
+        a near Number
+        a far Number
+        a type String
+        a controlsEnabled Boolean
+        a minDistance Number
+        a maxDistance Number
+
+actions
+    create (id: String, scene: String, position: Vector3, target: Vector3, fov: Number, near: Number, far: Number, type: String) : (id: String)
+        create a new camera with the specified properties and enable orbit controls
+        return the camera id
+    setPosition (id: String, position: Vector3) : (id: String)
+        set the camera position (overridden by orbit controls when enabled)
+        return the camera id
+    setTarget (id: String, target: Vector3) : (id: String)
+        set the camera target/look-at point for orbit controls
+        return the camera id
+    follow (id: String, bodyId: String, distance: Number) : (id: String)
+        make the camera follow a specific celestial body at the given distance using orbit controls
+        return the camera id
+    orbit (id: String, bodyId: String, distance: Number, angle: Number) : (id: String)
+        position the camera in orbit around a celestial body (legacy method, prefer follow)
+        return the camera id
+    zoom (id: String, factor: Number) : (id: String)
+        zoom the camera in or out by the given factor using orbit controls
+        return the camera id
+    enableControls (id: String, enabled: Boolean) : (id: String)
+        enable or disable mouse orbit controls for the camera
+        return the camera id
+    setZoomLimits (id: String, minDistance: Number, maxDistance: Number) : (id: String)
+        set the minimum and maximum zoom distances for orbit controls
+        return the camera id
+
+queries
+    _getById (id: String) : (id: String, scene: String, position: Vector3, target: Vector3, fov: Number, near: Number, far: Number, type: String, controlsEnabled: Boolean, minDistance: Number, maxDistance: Number)
+        get a camera by its id including control settings
+    _getByScene (scene: String) : (id: String, scene: String, position: Vector3, target: Vector3, fov: Number, near: Number, far: Number, type: String, controlsEnabled: Boolean, minDistance: Number, maxDistance: Number)
+        get all cameras in a scene with their control settings
+
+operational principle
+    after create (id: "main", scene: "main", position: [0,0,100], target: [0,0,0], fov: 75, near: 0.1, far: 1000, type: "perspective") : (id: "main")
+    and enableControls (id: "main", enabled: true) : (id: "main")
+    and follow (id: "main", bodyId: "earth", distance: 50) : (id: "main")
+    then _getById (id: "main") shows the camera with orbit controls enabled and positioned to follow Earth
+
+</concept_spec>

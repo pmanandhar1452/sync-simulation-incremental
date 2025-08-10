@@ -1,0 +1,51 @@
+<concept_spec>
+
+concept Simulation
+
+purpose
+    to control the simulation time, speed, and physics calculations for the solar system
+
+state
+    a set of Simulations with
+        an id String
+        a time Number
+        a speed Number
+        a paused Boolean
+        a stepSize Number
+
+actions
+    create (id: String, time: Number, speed: Number, stepSize: Number) : (id: String)
+        create a new simulation with initial time, speed, and step size
+        return the simulation id
+    setTime (id: String, time: Number) : (id: String)
+        set the simulation time to a specific value
+        return the simulation id
+    setSpeed (id: String, speed: Number) : (id: String)
+        set the simulation speed multiplier
+        return the simulation id
+    pause (id: String) : (id: String)
+        pause the simulation
+        return the simulation id
+    resume (id: String) : (id: String)
+        resume the simulation
+        return the simulation id
+    step (id: String) : (id: String)
+        advance the simulation by one step
+        return the simulation id
+    reset (id: String) : (id: String)
+        reset the simulation to time zero
+        return the simulation id
+
+queries
+    _getById (id: String) : (id: String, time: Number, speed: Number, paused: Boolean, stepSize: Number)
+        get a simulation by its id
+    _getActive (id: String) : (id: String, time: Number, speed: Number, paused: Boolean, stepSize: Number)
+        get all active simulations
+
+operational principle
+    after create (id: "main", time: 0, speed: 1, stepSize: 0.01) : (id: "main")
+    and setSpeed (id: "main", speed: 2) : (id: "main")
+    and step (id: "main") : (id: "main")
+    then _getById (id: "main") shows the simulation advanced by the step size
+
+</concept_spec>

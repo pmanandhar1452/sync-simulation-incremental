@@ -1,0 +1,51 @@
+<concept_spec>
+
+concept CelestialBody
+
+purpose
+    to represent celestial bodies like planets, moons, and the sun with their physical properties and orbital mechanics including orbital inclinations
+
+state
+    a set of Bodies with
+        an id String
+        a name String
+        a type String
+        a mass Number
+        a radius Number
+        a distance Number
+        a orbitalPeriod Number
+        a inclination Number
+        a rotationPeriod Number
+        a color String
+        a parent String
+        a position Vector3
+        a velocity Vector3
+
+actions
+    create (id: String, name: String, type: String, mass: Number, radius: Number, distance: Number, orbitalPeriod: Number, inclination: Number, rotationPeriod: Number, color: String, parent: String) : (id: String)
+        create a new celestial body with the specified properties including orbital inclination
+        return the body id
+    updatePosition (id: String, position: Vector3) : (id: String)
+        update the position of a celestial body
+        return the body id
+    updateVelocity (id: String, velocity: Vector3) : (id: String)
+        update the velocity of a celestial body
+        return the body id
+    orbit (id: String, time: Number) : (id: String)
+        calculate and update the orbital position based on time and inclination
+        return the body id
+
+queries
+    _getById (id: String) : (id: String, name: String, type: String, mass: Number, radius: Number, distance: Number, orbitalPeriod: Number, inclination: Number, rotationPeriod: Number, color: String, parent: String, position: Vector3, velocity: Vector3)
+        get a celestial body by its id
+    _getByType (type: String) : (id: String, name: String, type: String, mass: Number, radius: Number, distance: Number, orbitalPeriod: Number, inclination: Number, rotationPeriod: Number, color: String, parent: String, position: Vector3, velocity: Vector3)
+        get all celestial bodies of a specific type
+    _getChildren (parent: String) : (id: String, name: String, type: String, mass: Number, radius: Number, distance: Number, orbitalPeriod: Number, inclination: Number, rotationPeriod: Number, color: String, parent: String, position: Vector3, velocity: Vector3)
+        get all celestial bodies that orbit around the specified parent
+
+operational principle
+    after create (id: "earth", name: "Earth", type: "planet", mass: 5.97e24, radius: 6371, distance: 149.6e6, orbitalPeriod: 365.25, inclination: 0.0, rotationPeriod: 1, color: "#0077be", parent: "sun") : (id: "earth")
+    and orbit (id: "earth", time: 0) : (id: "earth")
+    then _getById (id: "earth") shows the Earth at its initial orbital position in its inclined orbital plane
+
+</concept_spec>

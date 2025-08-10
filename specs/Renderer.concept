@@ -1,0 +1,61 @@
+<concept_spec>
+
+concept Renderer
+
+purpose
+    to manage the Three.js rendering system and display celestial bodies in 3D space with interactive camera controls
+
+state
+    a set of Scenes with
+        an id String
+        a canvas String
+        a width Number
+        a height Number
+        a backgroundColor String
+        a controlsEnabled Boolean
+    a set of Objects with
+        an id String
+        a scene String
+        a bodyId String
+        a mesh String
+        a visible Boolean
+
+actions
+    createScene (id: String, canvas: String, width: Number, height: Number, backgroundColor: String) : (id: String)
+        create a new Three.js scene with the specified canvas and dimensions, including orbit controls
+        return the scene id
+    addBody (scene: String, bodyId: String, mesh: String) : (id: String)
+        add a celestial body mesh to the scene
+        return the object id
+    removeBody (scene: String, bodyId: String) : (id: String)
+        remove a celestial body mesh from the scene
+        return the object id
+    updateBody (scene: String, bodyId: String, position: Vector3, scale: Vector3) : (id: String)
+        update the position and scale of a body mesh in the scene
+        return the object id
+    render (scene: String) : (id: String)
+        render the scene to the canvas with updated camera controls
+        return the scene id
+    setVisible (scene: String, bodyId: String, visible: Boolean) : (id: String)
+        set the visibility of a body in the scene
+        return the object id
+    enableControls (scene: String, enabled: Boolean) : (id: String)
+        enable or disable mouse orbit controls for the scene
+        return the scene id
+
+queries
+    _getScene (id: String) : (id: String, canvas: String, width: Number, height: Number, backgroundColor: String, controlsEnabled: Boolean)
+        get a scene by its id including control settings
+    _getObjects (scene: String) : (id: String, scene: String, bodyId: String, mesh: String, visible: Boolean)
+        get all objects in a scene
+    _getBodyObject (scene: String, bodyId: String) : (id: String, scene: String, bodyId: String, mesh: String, visible: Boolean)
+        get a specific body object in a scene
+
+operational principle
+    after createScene (id: "main", canvas: "canvas", width: 800, height: 600, backgroundColor: "#000000") : (id: "main")
+    and enableControls (scene: "main", enabled: true) : (id: "main")
+    and addBody (scene: "main", bodyId: "earth", mesh: "sphere") : (id: "obj1")
+    and render (scene: "main") : (id: "main")
+    then _getScene (id: "main") shows the scene with the Earth body rendered and orbit controls enabled
+
+</concept_spec>
