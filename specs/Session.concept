@@ -1,0 +1,55 @@
+<concept_spec>
+
+concept Session
+
+purpose
+    to manage user sessions and authentication tokens for secure access
+
+state
+    a set of Sessions with
+        an id String
+        a userId String
+        a token String
+        a createdAt Number
+        a expiresAt Number
+        a active Boolean
+
+actions
+    create (id: String, userId: String, token: String, duration: Number) : (id: String)
+        create a new session with expiration time
+        return the session id
+    validate (id: String, token: String) : (id: String, userId: String)
+        validate session token and return user id if valid and not expired
+        return the session id and user id
+    validate (id: String, token: String) : (error: String)
+        if token is invalid or expired, return error message
+        return the error description
+    invalidate (id: String, token: String) : (id: String)
+        mark session as inactive
+        return the session id
+    refresh (id: String, token: String, duration: Number) : (id: String)
+        extend session expiration time
+        return the session id
+    refresh (id: String, token: String, duration: Number) : (error: String)
+        if session is invalid or expired, return error message
+        return the error description
+    cleanup (currentTime: Number) : ()
+        remove all expired sessions
+        no return value
+
+queries
+    _getById (id: String) : (id: String, userId: String, token: String, createdAt: Number, expiresAt: Number, active: Boolean)
+        get session by id
+    _getByToken (token: String) : (id: String, userId: String, token: String, createdAt: Number, expiresAt: Number, active: Boolean)
+        get session by token
+    _getByUserId (userId: String) : (id: String, userId: String, token: String, createdAt: Number, expiresAt: Number, active: Boolean)
+        get all active sessions for a user
+    _getExpired (currentTime: Number) : (id: String, userId: String, token: String, createdAt: Number, expiresAt: Number, active: Boolean)
+        get all expired sessions
+
+operational principle
+    after create (id: "sess1", userId: "user1", token: "abc123", duration: 3600) : (id: "sess1")
+    and validate (id: "sess1", token: "abc123") : (id: "sess1", userId: "user1")
+    then _getById (id: "sess1") shows the session is active and valid
+
+</concept_spec>

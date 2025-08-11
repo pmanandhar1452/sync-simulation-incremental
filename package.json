@@ -6,6 +6,7 @@
   "scripts": {
     "start": "python3 -m http.server 8000",
     "serve": "npx http-server -p 8000",
+    "server": "deno run --allow-net --allow-read server.ts",
     "test": "echo \"No tests specified\" && exit 0"
   },
   "keywords": [

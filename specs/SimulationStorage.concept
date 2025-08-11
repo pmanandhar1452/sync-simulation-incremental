@@ -1,0 +1,66 @@
+<concept_spec>
+
+concept SimulationStorage
+
+purpose
+    to persist and retrieve simulation configurations for users
+
+state
+    a set of SavedSimulations with
+        an id String
+        a userId String
+        a name String
+        a description String
+        a simulationData Json
+        a createdAt Number
+        a updatedAt Number
+        a isPublic Boolean
+
+actions
+    save (id: String, userId: String, name: String, description: String, simulationData: Json, isPublic: Boolean) : (id: String)
+        save a simulation configuration for a user
+        return the saved simulation id
+    save (id: String, userId: String, name: String, description: String, simulationData: Json, isPublic: Boolean) : (error: String)
+        if name is empty or simulation data is invalid, return error message
+        return the error description
+    update (id: String, userId: String, name: String, description: String, simulationData: Json, isPublic: Boolean) : (id: String)
+        update an existing saved simulation
+        return the saved simulation id
+    update (id: String, userId: String, name: String, description: String, simulationData: Json, isPublic: Boolean) : (error: String)
+        if simulation doesn't exist or user doesn't own it, return error message
+        return the error description
+    delete (id: String, userId: String) : (id: String)
+        delete a saved simulation if user owns it
+        return the saved simulation id
+    delete (id: String, userId: String) : (error: String)
+        if simulation doesn't exist or user doesn't own it, return error message
+        return the error description
+    load (id: String, userId: String) : (id: String, name: String, description: String, simulationData: Json, isPublic: Boolean)
+        load a saved simulation if user owns it or it's public
+        return the simulation data
+    load (id: String, userId: String) : (error: String)
+        if simulation doesn't exist or user doesn't have access, return error message
+        return the error description
+    share (id: String, userId: String, isPublic: Boolean) : (id: String)
+        change the public/private status of a simulation
+        return the saved simulation id
+    share (id: String, userId: String, isPublic: Boolean) : (error: String)
+        if simulation doesn't exist or user doesn't own it, return error message
+        return the error description
+
+queries
+    _getById (id: String) : (id: String, userId: String, name: String, description: String, simulationData: Json, createdAt: Number, updatedAt: Number, isPublic: Boolean)
+        get saved simulation by id
+    _getByUserId (userId: String) : (id: String, userId: String, name: String, description: String, simulationData: Json, createdAt: Number, updatedAt: Number, isPublic: Boolean)
+        get all simulations owned by a user
+    _getPublic () : (id: String, userId: String, name: String, description: String, simulationData: Json, createdAt: Number, updatedAt: Number, isPublic: Boolean)
+        get all public simulations
+    _searchByName (name: String) : (id: String, userId: String, name: String, description: String, simulationData: Json, createdAt: Number, updatedAt: Number, isPublic: Boolean)
+        search simulations by name (public ones and user's own)
+
+operational principle
+    after save (id: "sim1", userId: "user1", name: "My Solar System", description: "A custom solar system", simulationData: {}, isPublic: false) : (id: "sim1")
+    and load (id: "sim1", userId: "user1") : (id: "sim1", name: "My Solar System", description: "A custom solar system", simulationData: {}, isPublic: false)
+    then _getById (id: "sim1") shows the simulation was saved and can be loaded
+
+</concept_spec>

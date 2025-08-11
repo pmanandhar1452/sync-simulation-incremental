@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System Simulation - User Platform</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        #canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #auth-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            min-width: 300px;
+            border: 1px solid #333;
+        }
+        
+        #user-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            min-width: 300px;
+            border: 1px solid #333;
+            display: none;
+        }
+        
+        #simulation-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            min-width: 250px;
+            border: 1px solid #333;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #0077be;
+        }
+        
+        input, button, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #333;
+            color: white;
+            box-sizing: border-box;
+        }
+        
+        textarea {
+            height: 60px;
+            resize: vertical;
+        }
+        
+        button {
+            background: #0077be;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background: #005a8b;
+        }
+        
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        
+        .secondary-button {
+            background: #666;
+        }
+        
+        .secondary-button:hover {
+            background: #555;
+        }
+        
+        .error {
+            color: #ff6b6b;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .success {
+            color: #51cf66;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .info-item {
+            margin-bottom: 10px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #0077be;
+        }
+        
+        .simulation-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+            background: #222;
+        }
+        
+        .simulation-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            background: #333;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .simulation-item:hover {
+            background: #444;
+        }
+        
+        .simulation-item h4 {
+            margin: 0 0 5px 0;
+            color: #0077be;
+        }
+        
+        .simulation-item p {
+            margin: 0;
+            font-size: 12px;
+            color: #ccc;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 8px;
+            background: #333;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .tab.active {
+            background: #0077be;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <!-- Authentication Panel -->
+    <div id="auth-panel">
+        <h3>Welcome to Solar System Simulation</h3>
+        <p>Create simulations as a guest or register to save your work.</p>
+        
+        <div class="tabs">
+            <button class="tab active" data-tab="guest">Guest Mode</button>
+            <button class="tab" data-tab="login">Login</button>
+            <button class="tab" data-tab="register">Register</button>
+        </div>
+        
+        <!-- Guest Tab -->
+        <div id="guest-tab" class="tab-content active">
+            <p>Start exploring the solar system immediately!</p>
+            <button id="startGuestBtn">Start as Guest</button>
+            <button onclick="testButtons()" style="background: orange; margin-top: 10px;">Test Buttons</button>
+        </div>
+        
+        <!-- Login Tab -->
+        <div id="login-tab" class="tab-content">
+            <div class="control-group">
+                <label for="loginUsername">Username:</label>
+                <input type="text" id="loginUsername" placeholder="Enter username">
+            </div>
+            <div class="control-group">
+                <label for="loginPassword">Password:</label>
+                <input type="password" id="loginPassword" placeholder="Enter password">
+            </div>
+            <button id="loginBtn">Login</button>
+            <div id="loginMessage"></div>
+        </div>
+        
+        <!-- Register Tab -->
+        <div id="register-tab" class="tab-content">
+            <div class="control-group">
+                <label for="regUsername">Username:</label>
+                <input type="text" id="regUsername" placeholder="Enter username">
+            </div>
+            <div class="control-group">
+                <label for="regEmail">Email:</label>
+                <input type="email" id="regEmail" placeholder="Enter email">
+            </div>
+            <div class="control-group">
+                <label for="regPassword">Password:</label>
+                <input type="password" id="regPassword" placeholder="Enter password">
+            </div>
+            <button id="registerBtn">Register</button>
+            <div id="registerMessage"></div>
+        </div>
+    </div>
+    
+    <!-- User Panel (shown after login) -->
+    <div id="user-panel">
+        <h3>Welcome, <span id="userDisplayName">User</span>!</h3>
+        
+        <div class="control-group">
+            <label for="speed">Speed:</label>
+            <input type="range" id="speed" min="0" max="10" step="0.1" value="1">
+            <span id="speedValue">1x</span>
+        </div>
+        
+        <div class="control-group">
+            <button id="playPause">Pause</button>
+            <button id="reset">Reset</button>
+        </div>
+        
+        <div class="control-group">
+            <label for="cameraTarget">Camera Target:</label>
+            <select id="cameraTarget">
+                <option value="sun">Sun</option>
+                <option value="mercury">Mercury</option>
+                <option value="venus">Venus</option>
+                <option value="earth">Earth</option>
+                <option value="mars">Mars</option>
+                <option value="jupiter">Jupiter</option>
+                <option value="saturn">Saturn</option>
+                <option value="uranus">Uranus</option>
+                <option value="neptune">Neptune</option>
+            </select>
+        </div>
+        
+        <div class="control-group">
+            <label for="zoom">Zoom:</label>
+            <input type="range" id="zoom" min="0.1" max="5" step="0.1" value="1">
+            <span id="zoomValue">1x</span>
+        </div>
+        
+        <button class="secondary-button" id="logoutBtn">Logout</button>
+    </div>
+    
+    <!-- Simulation Management Panel -->
+    <div id="simulation-panel">
+        <h3>Simulation Management</h3>
+        
+        <div class="tabs">
+            <button class="tab active" data-tab="save">Save</button>
+            <button class="tab" data-tab="load">Load</button>
+            <button class="tab" data-tab="public">Public</button>
+        </div>
+        
+        <!-- Save Tab -->
+        <div id="save-tab" class="tab-content active">
+            <div class="control-group">
+                <label for="saveName">Simulation Name:</label>
+                <input type="text" id="saveName" placeholder="Enter simulation name">
+            </div>
+            <div class="control-group">
+                <label for="saveDescription">Description:</label>
+                <textarea id="saveDescription" placeholder="Enter description"></textarea>
+            </div>
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="savePublic"> Make Public
+                </label>
+            </div>
+            <button id="saveSimulationBtn">Save Simulation</button>
+            <div id="saveMessage"></div>
+        </div>
+        
+        <!-- Load Tab -->
+        <div id="load-tab" class="tab-content">
+            <div class="control-group">
+                <label for="loadSearch">Search:</label>
+                <input type="text" id="loadSearch" placeholder="Search simulations" onkeyup="searchSimulations()">
+            </div>
+            <div class="simulation-list" id="userSimulations">
+                <p>No saved simulations found.</p>
+            </div>
+        </div>
+        
+        <!-- Public Tab -->
+        <div id="public-tab" class="tab-content">
+            <div class="simulation-list" id="publicSimulations">
+                <p>No public simulations found.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="./user-app.js"></script>
+</body>
+</html>

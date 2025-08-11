@@ -1,0 +1,62 @@
+<concept_spec>
+
+concept User
+
+purpose
+    to manage user accounts and authentication for the simulation platform
+
+state
+    a set of Users with
+        an id String
+        a username String
+        an email String
+        a passwordHash String
+        a createdAt Number
+        a lastLogin Number
+
+actions
+    register (id: String, username: String, email: String, password: String) : (id: String)
+        create a new user account with hashed password
+        return the user id
+    register (id: String, username: String, email: String, password: String) : (error: String)
+        if username or email already exists, return error message
+        return the error description
+    login (username: String, password: String) : (id: String, token: String)
+        authenticate user and return user id with session token
+        return the user id and authentication token
+    login (username: String, password: String) : (error: String)
+        if credentials are invalid, return error message
+        return the error description
+    logout (id: String, token: String) : (id: String)
+        invalidate the user's session token
+        return the user id
+    updateProfile (id: String, username: String, email: String) : (id: String)
+        update user's profile information
+        return the user id
+    updateProfile (id: String, username: String, email: String) : (error: String)
+        if username or email conflicts with existing user, return error
+        return the error description
+    changePassword (id: String, oldPassword: String, newPassword: String) : (id: String)
+        change user's password if old password is correct
+        return the user id
+    changePassword (id: String, oldPassword: String, newPassword: String) : (error: String)
+        if old password is incorrect, return error message
+        return the error description
+
+queries
+    _getById (id: String) : (id: String, username: String, email: String, createdAt: Number, lastLogin: Number)
+        get user by id (excluding password hash)
+    _getByUsername (username: String) : (id: String, username: String, email: String, passwordHash: String, createdAt: Number, lastLogin: Number)
+        get user by username for authentication
+    _getByEmail (email: String) : (id: String, username: String, email: String, createdAt: Number, lastLogin: Number)
+        get user by email (excluding password hash)
+    _validateToken (id: String, token: String) : (id: String, username: String, email: String)
+        validate session token and return user info
+        return user info if token is valid
+
+operational principle
+    after register (id: "user1", username: "alice", email: "alice@example.com", password: "secret123") : (id: "user1")
+    and login (username: "alice", password: "secret123") : (id: "user1", token: "abc123")
+    then _getById (id: "user1") shows the user was created with username "alice"
+
+</concept_spec>
