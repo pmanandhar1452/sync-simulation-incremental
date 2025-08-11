@@ -30,39 +30,28 @@ export class UserConcept {
     }
 
     async register(id: string, username: string, email: string, password: string): Promise<{ id: string } | { error: string }> {
-        console.log(`📝 Registration attempt for: ${username} (${email})`);
-        console.log(`📊 Current users in system: ${this.users.size}`);
-        
         // Check if username or email already exists
         for (const user of this.users.values()) {
-            console.log(`  - Checking existing user: ${user.username} (${user.email})`);
             if (user.username === username) {
-                console.log(`❌ Username already exists: ${username}`);
                 return { error: "Username already exists" };
             }
             if (user.email === email) {
-                console.log(`❌ Email already exists: ${email}`);
                 return { error: "Email already exists" };
             }
         }
 
         // Validate input
         if (!username || username.trim().length < 3) {
-            console.log(`❌ Username too short: ${username}`);
             return { error: "Username must be at least 3 characters long" };
         }
         if (!email || !email.includes('@')) {
-            console.log(`❌ Invalid email: ${email}`);
             return { error: "Invalid email address" };
         }
         if (!password || password.length < 6) {
-            console.log(`❌ Password too short: ${password.length} characters`);
             return { error: "Password must be at least 6 characters long" };
         }
 
-        console.log(`🔐 Hashing password for user: ${username}`);
         const passwordHash = await this.hashPassword(password);
-        console.log(`🔑 Password hash generated: ${passwordHash.substring(0, 10)}...`);
         
         const user: User = {
             id,
@@ -74,49 +63,34 @@ export class UserConcept {
         };
 
         this.users.set(id, user);
-        console.log(`✅ User registered successfully: ${username} (${id})`);
-        console.log(`📊 Total users after registration: ${this.users.size}`);
         return { id };
     }
 
     async login(username: string, password: string): Promise<{ id: string; token: string } | { error: string }> {
-        console.log(`🔍 Looking for user: ${username}`);
-        console.log(`📊 Total users in system: ${this.users.size}`);
-        
         // Find user by username
         let user: User | undefined;
         for (const u of this.users.values()) {
-            console.log(`  - Checking user: ${u.username} (${u.id})`);
             if (u.username === username) {
                 user = u;
-                console.log(`✅ Found user: ${u.username} (${u.id})`);
                 break;
             }
         }
 
         if (!user) {
-            console.log(`❌ User not found: ${username}`);
             return { error: "Invalid username or password" };
         }
 
-        console.log(`🔐 Verifying password for user: ${user.username}`);
         // Verify password
         const isValid = await this.verifyPassword(password, user.passwordHash);
-        console.log(`🔑 Password verification result: ${isValid}`);
-        
         if (!isValid) {
-            console.log(`❌ Password verification failed for user: ${user.username}`);
             return { error: "Invalid username or password" };
         }
-
-        console.log(`✅ Password verified successfully for user: ${user.username}`);
 
         // Update last login
         user.lastLogin = Date.now();
         this.users.set(user.id, user);
 
         const token = this.generateToken();
-        console.log(`🎫 Generated token: ${token}`);
         return { id: user.id, token };
     }
 

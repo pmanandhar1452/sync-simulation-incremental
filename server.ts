@@ -75,19 +75,15 @@ async function handleApiRequest(request: Request): Promise<Response> {
         const body = await parseJsonBody(request);
         const { username, email, password } = body;
 
-        console.log(`🔐 Registration attempt: ${username} (${email})`);
-
         const userId = generateId();
         const result = await User.register(userId, username, email, password);
 
         if ("error" in result) {
-            console.log(`❌ Registration failed: ${result.error}`);
             return new Response(JSON.stringify({ success: false, error: result.error }), {
                 headers: { "Content-Type": "application/json" }
             });
         }
 
-        console.log(`✅ Registration successful: ${username} -> ${result.id}`);
         return new Response(JSON.stringify({ 
             success: true, 
             userId: result.id, 
@@ -101,31 +97,24 @@ async function handleApiRequest(request: Request): Promise<Response> {
         const body = await parseJsonBody(request);
         const { username, password } = body;
 
-        console.log(`🔑 Login attempt: ${username}`);
-
         const result = await User.login(username, password);
 
         if ("error" in result) {
-            console.log(`❌ Login failed: ${result.error}`);
             return new Response(JSON.stringify({ success: false, error: result.error }), {
                 headers: { "Content-Type": "application/json" }
             });
         }
-
-        console.log(`✅ Login successful: ${username} -> ${result.id}`);
 
         // Create session
         const sessionId = generateId();
         const sessionResult = Session.create(sessionId, result.id, result.token, 3600);
 
         if ("error" in sessionResult) {
-            console.log(`❌ Session creation failed: ${sessionResult.error}`);
             return new Response(JSON.stringify({ success: false, error: "Failed to create session" }), {
                 headers: { "Content-Type": "application/json" }
             });
         }
 
-        console.log(`✅ Session created: ${sessionId}`);
         return new Response(JSON.stringify({ 
             success: true, 
             userId: result.id, 
