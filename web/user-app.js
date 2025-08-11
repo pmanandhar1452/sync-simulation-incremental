@@ -10,6 +10,79 @@ let currentUser = null;
 let currentToken = null;
 let isGuest = false;
 let simulationData = {};
+let isPlaying = true;
+let animationSpeed = 1;
+
+// Solar System Configuration Data
+const solarSystemConfigs = {
+    default: {
+        sun: { size: 5, color: 0xffff00, name: 'Sun' },
+        planets: [
+            { name: 'Mercury', size: 0.8, distance: 10, color: 0x8c7853, speed: 0.04, moons: [] },
+            { name: 'Venus', size: 1.2, distance: 15, color: 0xffd700, speed: 0.015, moons: [] },
+            { name: 'Earth', size: 1.5, distance: 20, color: 0x0077be, speed: 0.01, moons: [
+                { name: 'Moon', size: 0.4, distance: 3, color: 0xcccccc, speed: 0.03 }
+            ]},
+            { name: 'Mars', size: 1.2, distance: 25, color: 0xff6b35, speed: 0.008, moons: [
+                { name: 'Phobos', size: 0.2, distance: 2, color: 0x8b7355, speed: 0.05 },
+                { name: 'Deimos', size: 0.15, distance: 2.5, color: 0x696969, speed: 0.04 }
+            ]},
+            { name: 'Jupiter', size: 3, distance: 35, color: 0xffa500, speed: 0.002, moons: [
+                { name: 'Io', size: 0.6, distance: 4, color: 0xffd700, speed: 0.02 },
+                { name: 'Europa', size: 0.5, distance: 5, color: 0x87ceeb, speed: 0.015 },
+                { name: 'Ganymede', size: 0.7, distance: 6, color: 0x8b4513, speed: 0.012 },
+                { name: 'Callisto', size: 0.6, distance: 7, color: 0x696969, speed: 0.01 }
+            ]},
+            { name: 'Saturn', size: 2.5, distance: 45, color: 0xffd700, speed: 0.0009, moons: [
+                { name: 'Titan', size: 0.8, distance: 4, color: 0xffa500, speed: 0.008 },
+                { name: 'Enceladus', size: 0.3, distance: 3, color: 0xffffff, speed: 0.015 }
+            ]},
+            { name: 'Uranus', size: 2, distance: 55, color: 0x40e0d0, speed: 0.0004, moons: [
+                { name: 'Miranda', size: 0.2, distance: 3, color: 0x8b7355, speed: 0.02 },
+                { name: 'Ariel', size: 0.4, distance: 4, color: 0x87ceeb, speed: 0.015 }
+            ]},
+            { name: 'Neptune', size: 2, distance: 65, color: 0x4169e1, speed: 0.0001, moons: [
+                { name: 'Triton', size: 0.6, distance: 4, color: 0x87ceeb, speed: 0.01 }
+            ]}
+        ]
+    },
+    inner: {
+        sun: { size: 5, color: 0xffff00, name: 'Sun' },
+        planets: [
+            { name: 'Mercury', size: 0.8, distance: 10, color: 0x8c7853, speed: 0.04, moons: [] },
+            { name: 'Venus', size: 1.2, distance: 15, color: 0xffd700, speed: 0.015, moons: [] },
+            { name: 'Earth', size: 1.5, distance: 20, color: 0x0077be, speed: 0.01, moons: [
+                { name: 'Moon', size: 0.4, distance: 3, color: 0xcccccc, speed: 0.03 }
+            ]},
+            { name: 'Mars', size: 1.2, distance: 25, color: 0xff6b35, speed: 0.008, moons: [
+                { name: 'Phobos', size: 0.2, distance: 2, color: 0x8b7355, speed: 0.05 },
+                { name: 'Deimos', size: 0.15, distance: 2.5, color: 0x696969, speed: 0.04 }
+            ]}
+        ]
+    },
+    outer: {
+        sun: { size: 5, color: 0xffff00, name: 'Sun' },
+        planets: [
+            { name: 'Jupiter', size: 3, distance: 35, color: 0xffa500, speed: 0.002, moons: [
+                { name: 'Io', size: 0.6, distance: 4, color: 0xffd700, speed: 0.02 },
+                { name: 'Europa', size: 0.5, distance: 5, color: 0x87ceeb, speed: 0.015 },
+                { name: 'Ganymede', size: 0.7, distance: 6, color: 0x8b4513, speed: 0.012 },
+                { name: 'Callisto', size: 0.6, distance: 7, color: 0x696969, speed: 0.01 }
+            ]},
+            { name: 'Saturn', size: 2.5, distance: 45, color: 0xffd700, speed: 0.0009, moons: [
+                { name: 'Titan', size: 0.8, distance: 4, color: 0xffa500, speed: 0.008 },
+                { name: 'Enceladus', size: 0.3, distance: 3, color: 0xffffff, speed: 0.015 }
+            ]},
+            { name: 'Uranus', size: 2, distance: 55, color: 0x40e0d0, speed: 0.0004, moons: [
+                { name: 'Miranda', size: 0.2, distance: 3, color: 0x8b7355, speed: 0.02 },
+                { name: 'Ariel', size: 0.4, distance: 4, color: 0x87ceeb, speed: 0.015 }
+            ]},
+            { name: 'Neptune', size: 2, distance: 65, color: 0x4169e1, speed: 0.0001, moons: [
+                { name: 'Triton', size: 0.6, distance: 4, color: 0x87ceeb, speed: 0.01 }
+            ]}
+        ]
+    }
+};
 
 
 
@@ -42,49 +115,99 @@ function setupThreeJS() {
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
 
-    // Create basic solar system
-    createBasicSolarSystem();
+    // Create default solar system
+    createSolarSystem('default');
 
     // Start animation loop
     animate();
 }
 
-// Create a basic solar system
-function createBasicSolarSystem() {
-    // Sun
-    const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
-    const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+// Create solar system based on configuration
+function createSolarSystem(configName) {
+    // Clear existing bodies
+    bodies.forEach(body => {
+        scene.remove(body);
+    });
+    bodies.clear();
+
+    const config = solarSystemConfigs[configName];
+    if (!config) {
+        console.error('Invalid configuration:', configName);
+        return;
+    }
+
+    // Create sun
+    const sunGeometry = new THREE.SphereGeometry(config.sun.size, 32, 32);
+    const sunMaterial = new THREE.MeshBasicMaterial({ color: config.sun.color });
     const sun = new THREE.Mesh(sunGeometry, sunMaterial);
     scene.add(sun);
     bodies.set('sun', sun);
 
-    // Earth
-    const earthGeometry = new THREE.SphereGeometry(1, 32, 32);
-    const earthMaterial = new THREE.MeshBasicMaterial({ color: 0x0077be });
-    const earth = new THREE.Mesh(earthGeometry, earthMaterial);
-    earth.position.set(20, 0, 0);
-    scene.add(earth);
-    bodies.set('earth', earth);
+    // Create planets and their moons
+    config.planets.forEach(planet => {
+        // Create planet
+        const planetGeometry = new THREE.SphereGeometry(planet.size, 32, 32);
+        const planetMaterial = new THREE.MeshBasicMaterial({ color: planet.color });
+        const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial);
+        
+        // Set initial position
+        planetMesh.position.set(planet.distance, 0, 0);
+        scene.add(planetMesh);
+        bodies.set(planet.name.toLowerCase(), planetMesh);
 
-    // Add some lighting
+        // Create moons
+        planet.moons.forEach(moon => {
+            const moonGeometry = new THREE.SphereGeometry(moon.size, 32, 32);
+            const moonMaterial = new THREE.MeshBasicMaterial({ color: moon.color });
+            const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
+            
+            // Set initial position relative to planet
+            moonMesh.position.set(planet.distance + moon.distance, 0, 0);
+            scene.add(moonMesh);
+            bodies.set(moon.name.toLowerCase(), moonMesh);
+        });
+    });
+
+    // Add lighting
     const ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
 
     const sunLight = new THREE.PointLight(0xffffff, 1, 1000);
     sunLight.position.set(0, 0, 0);
     scene.add(sunLight);
+
+    // Update camera target options
+    updateCameraTargetOptions();
 }
 
 // Animation loop
 function animate() {
     requestAnimationFrame(animate);
 
-    // Rotate bodies
-    const earth = bodies.get('earth');
-    if (earth) {
-        earth.rotation.y += 0.01;
-        earth.position.x = Math.cos(Date.now() * 0.001) * 20;
-        earth.position.z = Math.sin(Date.now() * 0.001) * 20;
+    if (isPlaying) {
+        const time = Date.now() * 0.001 * animationSpeed;
+        
+        // Animate planets and moons
+        solarSystemConfigs.default.planets.forEach(planet => {
+            const planetMesh = bodies.get(planet.name.toLowerCase());
+            if (planetMesh) {
+                // Planet orbit
+                planetMesh.position.x = Math.cos(time * planet.speed) * planet.distance;
+                planetMesh.position.z = Math.sin(time * planet.speed) * planet.distance;
+                planetMesh.rotation.y += 0.01;
+
+                // Moon orbits
+                planet.moons.forEach(moon => {
+                    const moonMesh = bodies.get(moon.name.toLowerCase());
+                    if (moonMesh) {
+                        const planetPos = planetMesh.position.clone();
+                        moonMesh.position.x = planetPos.x + Math.cos(time * moon.speed) * moon.distance;
+                        moonMesh.position.z = planetPos.z + Math.sin(time * moon.speed) * moon.distance;
+                        moonMesh.rotation.y += 0.02;
+                    }
+                });
+            }
+        });
     }
 
     controls.update();
@@ -98,57 +221,171 @@ function setupEventListeners() {
     // Speed control
     const speedSlider = document.getElementById('speed');
     const speedValue = document.getElementById('speedValue');
+    
     if (speedSlider && speedValue) {
         speedSlider.addEventListener('input', (e) => {
-            const speed = parseFloat(e.target.value);
-            speedValue.textContent = speed + 'x';
-            // Update simulation speed here
+            animationSpeed = parseFloat(e.target.value);
+            speedValue.textContent = animationSpeed + 'x';
         });
     }
-
+    
+    // Play/Pause control
+    const playPauseBtn = document.getElementById('playPause');
+    if (playPauseBtn) {
+        playPauseBtn.addEventListener('click', togglePlayPause);
+    }
+    
+    // Reset control
+    const resetBtn = document.getElementById('reset');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetSimulation);
+    }
+    
+    // Camera target control
+    const cameraTarget = document.getElementById('cameraTarget');
+    if (cameraTarget) {
+        cameraTarget.addEventListener('change', (e) => {
+            focusCamera(e.target.value);
+        });
+    }
+    
     // Zoom control
     const zoomSlider = document.getElementById('zoom');
     const zoomValue = document.getElementById('zoomValue');
     if (zoomSlider && zoomValue) {
         zoomSlider.addEventListener('input', (e) => {
             const zoom = parseFloat(e.target.value);
+            camera.position.set(0, 50 * zoom, 100 * zoom);
             zoomValue.textContent = zoom + 'x';
-            camera.position.setLength(100 / zoom);
         });
     }
-
-    // Camera target
-    const cameraTarget = document.getElementById('cameraTarget');
-    if (cameraTarget) {
-        cameraTarget.addEventListener('change', (e) => {
-            const target = e.target.value;
-            focusCamera(target);
-        });
-    }
-
-    // Play/Pause button
-    const playPauseBtn = document.getElementById('playPause');
-    if (playPauseBtn) {
-        playPauseBtn.addEventListener('click', togglePlayPause);
-    }
-
-    // Reset button
-    const resetBtn = document.getElementById('reset');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', resetSimulation);
-    }
-
+    
+    // Configuration controls
+    setupConfigurationListeners();
+    
+    // Setup button listeners
+    setupButtonListeners();
+    
     // Window resize
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
-
-    // Setup button event listeners
-    setupButtonListeners();
     
     console.log('Event listeners set up successfully');
+}
+
+// Setup configuration event listeners
+function setupConfigurationListeners() {
+    const systemPreset = document.getElementById('systemPreset');
+    const applyConfigBtn = document.getElementById('applyConfigBtn');
+    const resetConfigBtn = document.getElementById('resetConfigBtn');
+    const customConfig = document.getElementById('customConfig');
+    const addPlanetBtn = document.getElementById('addPlanetBtn');
+    const addMoonBtn = document.getElementById('addMoonBtn');
+    
+    if (systemPreset) {
+        systemPreset.addEventListener('change', (e) => {
+            if (e.target.value === 'custom') {
+                customConfig.style.display = 'block';
+            } else {
+                customConfig.style.display = 'none';
+            }
+        });
+    }
+    
+    if (applyConfigBtn) {
+        applyConfigBtn.addEventListener('click', () => {
+            const selectedConfig = systemPreset ? systemPreset.value : 'default';
+            createSolarSystem(selectedConfig);
+        });
+    }
+    
+    if (resetConfigBtn) {
+        resetConfigBtn.addEventListener('click', () => {
+            if (systemPreset) {
+                systemPreset.value = 'default';
+                customConfig.style.display = 'none';
+            }
+            createSolarSystem('default');
+        });
+    }
+    
+    if (addPlanetBtn) {
+        addPlanetBtn.addEventListener('click', addCustomPlanet);
+    }
+    
+    if (addMoonBtn) {
+        addMoonBtn.addEventListener('click', addCustomMoon);
+    }
+}
+
+// Add custom planet
+function addCustomPlanet() {
+    const container = document.getElementById('planets-container');
+    if (!container) return;
+    
+    const planetDiv = document.createElement('div');
+    planetDiv.className = 'body-item';
+    planetDiv.innerHTML = `
+        <div class="body-item-header">
+            <span class="body-item-name">New Planet</span>
+            <button class="remove-body" onclick="this.parentElement.parentElement.remove()">Remove</button>
+        </div>
+        <div class="body-controls">
+            <label>Name: <input type="text" value="New Planet"></label>
+            <label>Size: <input type="range" min="0.1" max="5" value="1" step="0.1"></label>
+            <label>Distance: <input type="range" min="5" max="100" value="20" step="1"></label>
+            <label>Speed: <input type="range" min="0.001" max="0.1" value="0.01" step="0.001"></label>
+        </div>
+    `;
+    container.appendChild(planetDiv);
+}
+
+// Add custom moon
+function addCustomMoon() {
+    const container = document.getElementById('moons-container');
+    if (!container) return;
+    
+    const moonDiv = document.createElement('div');
+    moonDiv.className = 'body-item';
+    moonDiv.innerHTML = `
+        <div class="body-item-header">
+            <span class="body-item-name">New Moon</span>
+            <button class="remove-body" onclick="this.parentElement.parentElement.remove()">Remove</button>
+        </div>
+        <div class="body-controls">
+            <label>Name: <input type="text" value="New Moon"></label>
+            <label>Size: <input type="range" min="0.1" max="2" value="0.5" step="0.1"></label>
+            <label>Distance: <input type="range" min="1" max="10" value="3" step="0.5"></label>
+            <label>Speed: <input type="range" min="0.001" max="0.1" value="0.02" step="0.001"></label>
+        </div>
+    `;
+    container.appendChild(moonDiv);
+}
+
+// Update camera target options based on available bodies
+function updateCameraTargetOptions() {
+    const cameraTarget = document.getElementById('cameraTarget');
+    if (!cameraTarget) return;
+    
+    // Clear existing options
+    cameraTarget.innerHTML = '';
+    
+    // Add sun option
+    const sunOption = document.createElement('option');
+    sunOption.value = 'sun';
+    sunOption.textContent = 'Sun';
+    cameraTarget.appendChild(sunOption);
+    
+    // Add planet options
+    solarSystemConfigs.default.planets.forEach(planet => {
+        const planetOption = document.createElement('option');
+        planetOption.value = planet.name.toLowerCase();
+        planetOption.textContent = planet.name;
+        cameraTarget.appendChild(planetOption);
+    });
 }
 
 // Setup button event listeners
@@ -219,22 +456,54 @@ function focusCamera(target) {
 // Toggle play/pause
 function togglePlayPause() {
     const btn = document.getElementById('playPause');
-    if (btn.textContent === 'Pause') {
-        btn.textContent = 'Play';
-        // Pause simulation
-    } else {
+    isPlaying = !isPlaying;
+    
+    if (isPlaying) {
         btn.textContent = 'Pause';
-        // Resume simulation
+    } else {
+        btn.textContent = 'Play';
     }
 }
 
 // Reset simulation
 function resetSimulation() {
-    // Reset all bodies to initial positions
-    const earth = bodies.get('earth');
-    if (earth) {
-        earth.position.set(20, 0, 0);
-        earth.rotation.set(0, 0, 0);
+    // Reset camera position
+    camera.position.set(0, 50, 100);
+    controls.target.set(0, 0, 0);
+    controls.update();
+    
+    // Reset simulation state
+    createSolarSystem('default');
+    
+    // Reset controls
+    const speedSlider = document.getElementById('speed');
+    const speedValue = document.getElementById('speedValue');
+    if (speedSlider && speedValue) {
+        speedSlider.value = 1;
+        speedValue.textContent = '1x';
+        animationSpeed = 1;
+    }
+    
+    const zoomSlider = document.getElementById('zoom');
+    const zoomValue = document.getElementById('zoomValue');
+    if (zoomSlider && zoomValue) {
+        zoomSlider.value = 1;
+        zoomValue.textContent = '1x';
+    }
+    
+    const cameraTarget = document.getElementById('cameraTarget');
+    if (cameraTarget) {
+        cameraTarget.value = 'sun';
+    }
+    
+    const systemPreset = document.getElementById('systemPreset');
+    if (systemPreset) {
+        systemPreset.value = 'default';
+    }
+    
+    const customConfig = document.getElementById('customConfig');
+    if (customConfig) {
+        customConfig.style.display = 'none';
     }
 }
 

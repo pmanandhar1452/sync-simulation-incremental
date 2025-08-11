@@ -189,6 +189,97 @@
         .tab-content.active {
             display: block;
         }
+        
+        .celestial-bodies {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+            background: #222;
+            margin-top: 10px;
+        }
+        
+        .body-group {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #333;
+            border-radius: 5px;
+        }
+        
+        .body-group h5 {
+            margin: 0 0 10px 0;
+            color: #0077be;
+        }
+        
+        .body-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        
+        .body-controls label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+        
+        .body-controls input[type="range"] {
+            width: 100px;
+        }
+        
+        .body-controls input[type="text"] {
+            width: 80px;
+            padding: 2px 5px;
+            background: #444;
+            border: 1px solid #555;
+            color: white;
+            border-radius: 3px;
+        }
+        
+        .body-controls select {
+            padding: 2px 5px;
+            background: #444;
+            border: 1px solid #555;
+            color: white;
+            border-radius: 3px;
+        }
+        
+        .body-item {
+            background: #444;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 3px;
+            border-left: 3px solid #0077be;
+        }
+        
+        .body-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .body-item-name {
+            font-weight: bold;
+            color: #0077be;
+        }
+        
+        .remove-body {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 2px 6px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+        
+        .remove-body:hover {
+            background: #ff5252;
+        }
     </style>
 </head>
 <body>
@@ -264,14 +355,6 @@
             <label for="cameraTarget">Camera Target:</label>
             <select id="cameraTarget">
                 <option value="sun">Sun</option>
-                <option value="mercury">Mercury</option>
-                <option value="venus">Venus</option>
-                <option value="earth">Earth</option>
-                <option value="mars">Mars</option>
-                <option value="jupiter">Jupiter</option>
-                <option value="saturn">Saturn</option>
-                <option value="uranus">Uranus</option>
-                <option value="neptune">Neptune</option>
             </select>
         </div>
         
@@ -289,13 +372,61 @@
         <h3>Simulation Management</h3>
         
         <div class="tabs">
-            <button class="tab active" data-tab="save">Save</button>
+            <button class="tab active" data-tab="config">Configuration</button>
+            <button class="tab" data-tab="save">Save</button>
             <button class="tab" data-tab="load">Load</button>
             <button class="tab" data-tab="public">Public</button>
         </div>
         
+        <!-- Configuration Tab -->
+        <div id="config-tab" class="tab-content active">
+            <div class="control-group">
+                <label>Solar System Configuration:</label>
+                <select id="systemPreset">
+                    <option value="default">Default Solar System</option>
+                    <option value="inner">Inner Planets Only</option>
+                    <option value="outer">Outer Planets Only</option>
+                    <option value="custom">Custom Configuration</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <button id="applyConfigBtn">Apply Configuration</button>
+                <button id="resetConfigBtn">Reset to Default</button>
+            </div>
+            
+            <div id="customConfig" style="display: none;">
+                <h4>Custom Configuration</h4>
+                <div class="celestial-bodies">
+                    <div class="body-group">
+                        <h5>Sun</h5>
+                        <div class="body-controls">
+                            <label>Size: <input type="range" id="sun-size" min="1" max="10" value="5" step="0.1"></label>
+                            <span id="sun-size-value">5</span>
+                        </div>
+                    </div>
+                    
+                    <div class="body-group">
+                        <h5>Planets</h5>
+                        <div id="planets-container">
+                            <!-- Planets will be added here dynamically -->
+                        </div>
+                        <button id="addPlanetBtn">Add Planet</button>
+                    </div>
+                    
+                    <div class="body-group">
+                        <h5>Moons</h5>
+                        <div id="moons-container">
+                            <!-- Moons will be added here dynamically -->
+                        </div>
+                        <button id="addMoonBtn">Add Moon</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Save Tab -->
-        <div id="save-tab" class="tab-content active">
+        <div id="save-tab" class="tab-content">
             <div class="control-group">
                 <label for="saveName">Simulation Name:</label>
                 <input type="text" id="saveName" placeholder="Enter simulation name">
